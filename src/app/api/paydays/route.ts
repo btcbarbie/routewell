@@ -1,4 +1,5 @@
 import { handle } from "@/lib/http";
+import { checkLimit, clientIp } from "@/lib/limits";
 import { prisma } from "@/lib/prisma";
 import { toCents } from "@/lib/money";
 import { runPaydays } from "@/lib/paydays";
@@ -20,6 +21,7 @@ export async function POST(req: Request) {
     let message: string | undefined;
     switch (body.action) {
       case "PRETEND_AND_RUN": {
+        checkLimit("send", clientIp(req));
         if (!/^\d{4}-\d{2}-\d{2}$/.test(body.date)) throw new Error("Pick a date.");
         const date = new Date(`${body.date}T12:00:00Z`);
         if (Number.isNaN(date.getTime())) throw new Error("Pick a valid date.");

@@ -1,11 +1,13 @@
 import { handle } from "@/lib/http";
+import { checkLimit, clientIp } from "@/lib/limits";
 import { prisma } from "@/lib/prisma";
 import { payEnvelopes } from "@/lib/payrun";
 import { forgetTreasury, snapshot } from "@/lib/state";
 import { workspaceId, log } from "@/lib/workspace";
 
-export async function POST() {
+export async function POST(req: Request) {
   return handle(async () => {
+    checkLimit("send", clientIp(req));
     const ws = await workspaceId();
     const run = await prisma.payRun.findFirst({ where: { workspaceId: ws, status: "DRAFT", kind: "MANUAL" }, include: { envelopes: true } });
     if (!run) throw new Error("There's no pay run to send.");

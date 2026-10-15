@@ -1,0 +1,30 @@
+# Render Blueprint for Routewell. Secrets are marked sync: false, so Render asks for them in its dashboard.
+services:
+  - type: web
+    name: routewell
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: PAYPAL_API_BASE
+        value: https://api-m.sandbox.paypal.com
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_TEST_RECEIVER_EMAIL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: SOLANA_RPC_URL
+        value: https://api.devnet.solana.com
+      - key: PYUSD_MINT
+        value: CXk2AMBfi3TwaEL2468s6zP8xq9NxTXjp9gjMgzeUynM
+      - key: TREASURY_SECRET_KEY
+        sync: false
+      - key: TEST_WORKER_ADDRESS
+        value: mLdTcP6XHiMMkFWsAmPfKKg9SX8yBsuKjm7JJXxu84x

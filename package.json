@@ -5,11 +5,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "prisma db push && next start",
     "lint": "eslint",
     "wallets": "tsx scripts/wallets.ts",
     "proof:payouts": "tsx scripts/proof-payouts.ts",
-    "proof:pyusd": "tsx scripts/proof-pyusd.ts"
+    "proof:pyusd": "tsx scripts/proof-pyusd.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.134.0",
@@ -42,5 +43,8 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

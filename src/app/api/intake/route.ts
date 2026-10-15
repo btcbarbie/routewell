@@ -1,4 +1,5 @@
 import { handle } from "@/lib/http";
+import { checkLimit, clientIp } from "@/lib/limits";
 import { processIntake } from "@/lib/payrun";
 import { sheetToText } from "@/lib/sheets";
 import { snapshot } from "@/lib/state";
@@ -8,6 +9,7 @@ const MAX_FILE = 8 * 1024 * 1024;
 
 export async function POST(req: Request) {
   return handle(async () => {
+    checkLimit("ai", clientIp(req));
     const ws = await workspaceId();
     const form = await req.formData();
     const text = String(form.get("text") ?? "").slice(0, 8000);
