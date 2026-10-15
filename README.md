@@ -9,7 +9,9 @@ Routewell helps small teams pay contractors and pay back staff expenses, whereve
 ## Status
 
 - [x] Proof: PayPal sandbox batch payout (`npm run proof:payouts`). PayPal processes the batch and reports a result per person, including unclaimed payouts for people without a PayPal account.
-- [ ] Proof: test PYUSD transfer on Solana devnet (`npm run proof:pyusd`)
+- [x] Proof: test PYUSD transfer on Solana devnet (`npm run proof:pyusd`). Sends 1 test PYUSD from the company's test wallet to a worker's test wallet. This part runs on Solana devnet from our own wallet, not through PayPal.
+
+Test PYUSD for Solana devnet comes from the [Google Cloud Web3 faucet](https://cloud.google.com/application/web3/faucet) or [Paxos faucet](https://faucet.paxos.com). Devnet SOL for network fees comes from [faucet.solana.com](https://faucet.solana.com).
 
 ## Run it locally
 
