@@ -8,8 +8,8 @@ Routewell helps small teams pay contractors and pay back staff expenses, whereve
 
 ## Status
 
-- [ ] Proof: PayPal sandbox batch payout
-- [ ] Proof: test PYUSD transfer on Solana devnet
+- [x] Proof: PayPal sandbox batch payout (`npm run proof:payouts`). PayPal processes the batch and reports a result per person, including unclaimed payouts for people without a PayPal account.
+- [ ] Proof: test PYUSD transfer on Solana devnet (`npm run proof:pyusd`)
 
 ## Run it locally
 

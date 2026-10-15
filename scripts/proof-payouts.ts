@@ -73,7 +73,8 @@ async function main() {
     console.log(`Batch status: ${status}`);
     if (!["PENDING", "PROCESSING"].includes(status)) {
       for (const item of json.items ?? []) {
-        console.log(`  ${item.payout_item.receiver}: ${item.transaction_status} $${item.payout_item.amount.value}`);
+        const why = item.errors ? ` (${item.errors.name}: ${item.errors.message})` : "";
+        console.log(`  ${item.payout_item.receiver}: ${item.transaction_status} $${item.payout_item.amount.value}${why}`);
       }
       return;
     }
