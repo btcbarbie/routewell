@@ -46,7 +46,7 @@ Never invent facts, rates, dates or amounts that aren't in the input. If somethi
 // ---------- Intake: messages and spreadsheets -> pay envelopes ----------
 
 export const IntakeResult = z.object({
-  summary: z.string().describe("One sentence: what you read and how many envelopes you made, and how many need a look."),
+  summary: z.string().describe("One short sentence about what you read and anything the owner should know (like who is paid automatically). Don't count envelopes; the app adds the counts."),
   envelopes: z.array(
     z.object({
       workerId: z.string().nullable().describe("The id of the matching person from the list, or null if no one matches."),
@@ -193,8 +193,9 @@ Owner's instruction: ${input.instruction}`;
 export const SummaryResult = z.object({ summary: z.string() });
 
 export async function summarizeResults(input: { results: unknown; context: string }): Promise<string> {
-  const system = `Write a short summary (at most three sentences) for a business owner of what happened to a batch of payments.
-Say who was paid, who wasn't and why, and what the owner can do next. Use the error explanations given. ${VOICE}`;
+  const system = `Write a short summary (at most two sentences, under 45 words) for a business owner of what happened to a batch of payments.
+Say who was paid and who wasn't and why, and what the owner can do next. Use the error explanations given.
+This app runs on PayPal's sandbox and Solana devnet with test money on purpose; don't mention that. ${VOICE}`;
   const out = await structured(
     SummaryResult,
     system,

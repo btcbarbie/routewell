@@ -34,11 +34,6 @@ function payoutDetailIssues(worker: Worker, method: string): string[] {
   return issues;
 }
 
-function withIssues(note: string, extra: string[]) {
-  if (!extra.length) return note;
-  return `${note} Also: ${extra.join(" ")}`;
-}
-
 // ---------- Intake ----------
 
 export async function processIntake(
@@ -95,7 +90,7 @@ export async function processIntake(
           sourceQuote: e.sourceQuote,
           method,
           stamp: issues.length ? "LOOK_AGAIN" : "CHECKED",
-          aiNote: withIssues(e.note, extra),
+          aiNote: e.note, // code-found problems are listed with the AI's issues; the note stays the AI's words
           issues: JSON.stringify(issues),
         },
       });
@@ -107,7 +102,10 @@ export async function processIntake(
   if (failed.length) summaries.push(`Couldn't read ${failed.join("; ")}`);
 
   const receiptLine = input.receipts.length ? `Read ${input.receipts.length} receipt${input.receipts.length === 1 ? "" : "s"}.` : "";
-  const intakeSummary = [...summaries, receiptLine].filter(Boolean).join(" ");
+  const all = await prisma.envelope.findMany({ where: { payRunId: run.id, status: "DRAFT" } });
+  const flagged = all.filter((e) => e.stamp === "LOOK_AGAIN" && !e.ownerDecision).length;
+  const countLine = `${all.length} envelope${all.length === 1 ? "" : "s"} ready, ${flagged} need${flagged === 1 ? "s" : ""} a look.`;
+  const intakeSummary = [...summaries, receiptLine, countLine].filter(Boolean).join(" ");
   await prisma.payRun.update({ where: { id: run.id }, data: { intakeSummary } });
   await log(workspaceId, "AI", intakeSummary || "Read the new pay details.");
   return { runId: run.id, summary: intakeSummary };
@@ -181,7 +179,7 @@ async function processReceipt(
       sourceQuote: file.fileName,
       method: worker?.payoutMethod ?? "PAYPAL",
       stamp: issues.length ? "LOOK_AGAIN" : "CHECKED",
-      aiNote: withIssues(ai.note, extra),
+      aiNote: ai.note,
       issues: JSON.stringify(issues),
       receiptId: receipt.id,
     },

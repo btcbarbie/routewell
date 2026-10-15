@@ -65,8 +65,14 @@ export async function getBatch(payoutBatchId: string) {
   });
   const json = await res.json();
   if (!res.ok) throw new Error(`Couldn't read the batch from PayPal (${res.status}).`);
-  const items: BatchItemStatus[] = (json.items ?? []).map((i: Record<string, any>) => ({
-    envelopeId: i.payout_item?.sender_item_id,
+  type RawItem = {
+    payout_item_id: string;
+    transaction_status: string;
+    payout_item?: { sender_item_id?: string };
+    errors?: { name?: string; message?: string };
+  };
+  const items: BatchItemStatus[] = ((json.items ?? []) as RawItem[]).map((i) => ({
+    envelopeId: i.payout_item?.sender_item_id ?? "",
     payoutItemId: i.payout_item_id,
     status: i.transaction_status,
     errorName: i.errors?.name,
