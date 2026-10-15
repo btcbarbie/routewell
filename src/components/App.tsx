@@ -5,16 +5,18 @@ import type { Snapshot } from "@/lib/state";
 import type { AskResult } from "@/lib/ai";
 import { Clocks } from "./Clocks";
 import { History } from "./History";
+import { Paydays } from "./Paydays";
 import { People } from "./People";
 import { Rules } from "./Rules";
 import { ThisMonth } from "./ThisMonth";
 import { Btn } from "./ui";
 
-type Tab = "month" | "people" | "history" | "rules";
+type Tab = "month" | "paydays" | "people" | "history" | "rules";
 type Proposal = AskResult & { instruction: string };
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "month", label: "This month" },
+  { id: "paydays", label: "Paydays" },
   { id: "people", label: "People" },
   { id: "history", label: "History" },
   { id: "rules", label: "Rules" },
@@ -135,6 +137,19 @@ export function App() {
           propose={async (text) => (await post("/api/ask", { text })) as Proposal | null}
           apply={async (p) => !!(await post("/api/ask/apply", { instruction: p.instruction, actions: p.actions }))}
           openHistory={() => setTab("history")}
+        />
+      )}
+      {tab === "paydays" && (
+        <Paydays
+          s={s}
+          busy={busy}
+          act={async (body) => {
+            const running = (body as { action?: string }).action === "PRETEND_AND_RUN";
+            if (running) setBusy("payday");
+            const out = await post("/api/paydays", body);
+            if (running) setBusy(null);
+            return out;
+          }}
         />
       )}
       {tab === "people" && <People s={s} />}

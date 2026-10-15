@@ -32,3 +32,13 @@ body {
   color: var(--ink);
   font-family: var(--font-sans);
 }
+
+/* Bryntum calendar in Routewell's paper and ink */
+.routewell-calendar .b-widget,
+.routewell-calendar .b-calendar {
+  font-family: var(--font-sans);
+  --b-widget-background: var(--paper-hi);
+}
+.routewell-calendar .b-cal-event-desc {
+  font-weight: 600;
+}

@@ -204,3 +204,20 @@ This app runs on PayPal's sandbox and Solana devnet with test money on purpose; 
   );
   return out.summary;
 }
+
+// ---------- Scheduled paydays: explain the code's checks in plain words ----------
+
+export const PaydayNotes = z.object({
+  notes: z.array(z.object({ scheduleId: z.string(), note: z.string() })),
+  summary: z.string().describe("One sentence for the owner: what this payday will do."),
+});
+
+export async function explainPayday(input: { date: string; budget: string; items: unknown }): Promise<z.infer<typeof PaydayNotes>> {
+  const system = `It's a scheduled payday for a small business. Code has already checked each scheduled payment (approved amount, budget, payout details).
+Write one short margin note per payment explaining what was checked and the result, and a one-sentence summary.
+Only report the checks you're given. Don't change any decision. ${VOICE}`;
+  const text = `Payday date: ${input.date}. Monthly payday budget: ${input.budget}.
+Payments and the code's checks:
+${JSON.stringify(input.items, null, 2)}`;
+  return structured(PaydayNotes, system, [{ type: "text", text }], "low");
+}

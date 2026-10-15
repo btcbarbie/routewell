@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.134.0",
+    "@bryntum/calendar": "npm:@bryntum/calendar-trial@^7.3.7",
+    "@bryntum/calendar-react": "^7.3.7",
     "@prisma/adapter-better-sqlite3": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "@solana/spl-token": "^0.4.15",
