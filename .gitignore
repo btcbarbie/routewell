@@ -42,3 +42,7 @@ next-env.d.ts
 
 # keep the template
 !.env.example
+dev.db*
+
+# local tooling
+.claude/

@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Money is stored as integer cents (USD). PYUSD has 6 decimals on Solana, so 1 cent = 10,000 base units.
+// Each visitor gets their own demo workspace, so judges never see each other's changes.
+
+model Workspace {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+  companyName      String
+  // Scheduled paydays never spend more than this per month without asking.
+  paydayBudgetCents Int     @default(300000)
+  autopilotPaused  Boolean  @default(false)
+  // Demo control: when set, scheduled paydays treat this date as "today". Shown clearly in the UI.
+  pretendToday     String?
+
+  workers   Worker[]
+  payRuns   PayRun[]
+  rules     SpendingRule[]
+  receipts  Receipt[]
+  schedules Schedule[]
+  activity  Activity[]
+}
+
+model Worker {
+  id            String   @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name          String
+  role          String   // "CONTRACTOR" | "STAFF"
+  work          String   // short description, e.g. "Illustration"
+  rateNote      String   // e.g. "$25 per hour"
+  country       String   // ISO code, e.g. "NG"
+  city          String
+  timezone      String
+  payoutMethod  String   // "PAYPAL" | "PYUSD"
+  paypalEmail   String?
+  walletAddress String?
+  // Link token for the worker's own "how do you want to be paid" page.
+  choiceToken   String   @unique @default(cuid())
+  choiceUpdatedAt DateTime?
+  createdAt     DateTime @default(now())
+
+  envelopes Envelope[]
+  receipts  Receipt[]
+  schedules Schedule[]
+}
+
+model PayRun {
+  id               String   @id @default(cuid())
+  workspaceId      String
+  workspace        Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  label            String   // e.g. "October 2026"
+  kind             String   @default("MANUAL") // "MANUAL" | "SCHEDULED"
+  status           String   @default("DRAFT") // "DRAFT" | "SENT"
+  intakeSummary    String?
+  resultSummary    String?
+  paypalBatchId    String?
+  paypalBatchStatus String?
+  createdAt        DateTime @default(now())
+  sentAt           DateTime?
+
+  envelopes Envelope[]
+}
+
+model Envelope {
+  id           String   @id @default(cuid())
+  payRunId     String
+  payRun       PayRun   @relation(fields: [payRunId], references: [id], onDelete: Cascade)
+  workerId     String?
+  worker       Worker?  @relation(fields: [workerId], references: [id])
+  nameAsWritten String  // the name as it appeared in the input
+  kind         String   // "WORK" | "EXPENSE" | "BONUS" | "RETAINER"
+  amountCents  Int
+  description  String
+  calculation  String?  // e.g. "36 hours × $25"
+  sourceQuote  String?  // the words the AI read this from
+  method       String   // "PAYPAL" | "PYUSD"
+  stamp        String   // "CHECKED" | "LOOK_AGAIN" | "SCHEDULED"
+  aiNote       String
+  issues       String   @default("[]") // JSON array of short problem strings
+  ownerDecision String? // "PAY_ANYWAY" when the owner overrides a flag
+  status       String   @default("DRAFT") // "DRAFT" | "PENDING" | "PAID" | "UNCLAIMED" | "FAILED" | "RETURNED" | "HELD"
+  statusDetail String?
+  payoutItemId String?
+  txSignature  String?
+  receiptId    String?  @unique
+  receipt      Receipt? @relation(fields: [receiptId], references: [id])
+  scheduleId   String?
+  createdAt    DateTime @default(now())
+}
+
+model Receipt {
+  id          String   @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workerId    String?
+  worker      Worker?  @relation(fields: [workerId], references: [id])
+  imageData   Bytes
+  mimeType    String
+  imageHash   String
+  vendor      String?
+  receiptDate String?
+  amountCents Int?
+  currency    String?
+  category    String?
+  details     String?
+  createdAt   DateTime @default(now())
+
+  envelope Envelope?
+}
+
+model SpendingRule {
+  id          String   @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  text        String
+  createdAt   DateTime @default(now())
+}
+
+model Schedule {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workerId     String
+  worker       Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  amountCents  Int
+  dayOfMonth   Int
+  note         String
+  createdFrom  String   // the owner's own words
+  active       Boolean  @default(true)
+  lastPaidPeriod String? // "2026-10"
+  createdAt    DateTime @default(now())
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  at          DateTime @default(now())
+  actor       String   // "YOU" | "AI" | "PAYPAL" | "SOLANA" | "WORKER"
+  text        String
+}
