@@ -60,6 +60,7 @@ export async function snapshot(workspaceId: string) {
 
   return {
     company: ws.companyName,
+    isDemo: ws.isDemo,
     today: isoDay(today),
     pretendToday: ws.pretendToday,
     paydayBudgetCents: ws.paydayBudgetCents,

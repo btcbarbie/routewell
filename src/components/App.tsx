@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Snapshot } from "@/lib/state";
 import type { AskResult } from "@/lib/ai";
@@ -49,6 +50,11 @@ export function App() {
   const post = useCallback((url: string, body?: object) => call(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined }), [call]);
 
   useEffect(() => {
+    const fromHash = window.location.hash.slice(1) as Tab;
+    if (TABS.some((t) => t.id === fromHash)) setTimeout(() => setTab(fromHash), 0);
+  }, []);
+
+  useEffect(() => {
     fetch("/api/state")
       .then((r) => r.json())
       .then((json) => (json.error ? setError(json.error) : setS(json as Snapshot)))
@@ -81,14 +87,21 @@ export function App() {
   return (
     <main className="mx-auto w-full max-w-5xl px-4 pb-16">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-ink py-4">
-        <div className="flex items-center gap-2.5 font-display text-[22px] font-black tracking-tight">
+        <Link href="/" className="flex items-center gap-2.5 font-display text-[22px] font-black tracking-tight" aria-label="Routewell home">
           <span className="grid size-7 place-items-center rounded-full bg-orange font-mono text-[13px] font-semibold text-paper-hi" aria-hidden>
             R
           </span>
           Routewell
-          <span className="ml-1 hidden font-sans text-sm font-medium text-ink-soft sm:inline">for {s.company}</span>
+        </Link>
+        <div className="flex items-center gap-2.5">
+          <span className="font-display text-base font-bold">{s.company}</span>
+          <span className={`rounded-[3px] border-[1.5px] px-2 py-0.5 font-mono text-[11px] font-semibold tracking-wider ${s.isDemo ? "border-ink bg-acid" : "border-ink"}`}>
+            {s.isDemo ? "DEMO COMPANY" : "YOUR COMPANY"}
+          </span>
+          <Link href="/" className="text-sm underline underline-offset-4">
+            Switch
+          </Link>
         </div>
-        <span className="rounded-[3px] border-[1.5px] border-ink px-2 py-0.5 font-mono text-[11px] font-semibold tracking-wider">PAYPAL SANDBOX · TEST MONEY</span>
       </header>
 
       <Clocks workers={s.workers} />
@@ -137,6 +150,7 @@ export function App() {
           propose={async (text) => (await post("/api/ask", { text })) as Proposal | null}
           apply={async (p) => !!(await post("/api/ask/apply", { instruction: p.instruction, actions: p.actions }))}
           openHistory={() => setTab("history")}
+          openPeople={() => setTab("people")}
         />
       )}
       {tab === "paydays" && (
@@ -152,7 +166,7 @@ export function App() {
           }}
         />
       )}
-      {tab === "people" && <People s={s} />}
+      {tab === "people" && <People s={s} change={async (body) => !!(await post("/api/people", body))} />}
       {tab === "history" && (
         <History
           s={s}
@@ -168,7 +182,7 @@ export function App() {
 
       <footer className="mt-14 border-t-2 border-ink pt-4 text-[13px] text-ink-soft">
         <p>
-          Runs on PayPal&apos;s sandbox and Solana devnet with test money only. PayPal payouts go through PayPal Payouts. PYUSD payouts are sent from
+          Test money only: PayPal&apos;s sandbox and Solana devnet. PayPal payouts go through PayPal Payouts. PYUSD payouts are sent from
           Routewell&apos;s own test wallet on Solana devnet, not through PayPal.
           {s.treasury && (
             <>
@@ -177,6 +191,7 @@ export function App() {
             </>
           )}
         </p>
+        {s.isDemo && (
         <Btn
           variant="ghost"
           className="mt-2 !px-0"
@@ -188,6 +203,7 @@ export function App() {
         >
           Start the demo over
         </Btn>
+        )}
       </footer>
     </main>
   );

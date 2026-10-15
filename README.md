@@ -14,6 +14,8 @@ For nearly 20 years, freelancers in Nigeria could send money with PayPal but not
 
 ## What it does
 
+The homepage explains Routewell and offers two doors: **see the demo company** (Brightside Studio, already set up with 6 people in 5 countries) or **start your own** (name your company, add the people you pay, and pay them).
+
 - **Drop in this month's pay.** Paste messages, add a spreadsheet (.csv or .xlsx) and receipt photos. Claude reads them and makes one pay envelope per person, with the calculation it used ("36 hours × $25").
 - **An AI note on every envelope.** Each envelope says what was checked: rates, last month's pay, the sheet against the messages. Anything off is stamped **LOOK AGAIN** and explained, like hours that don't match, a receipt that was already paid back, or wine on a meal receipt when the rules say no alcohol.
 - **Receipts checked against your spending rules.** Claude reads the photo, applies your rules, and works out what can be paid back. Code also checks for the exact same receipt being sent twice.
@@ -33,7 +35,8 @@ The AI (Claude Opus 5.5, through the Anthropic API with structured outputs) read
 - **PYUSD:** transfers are sent from Routewell's own test wallet on Solana devnet, not through PayPal. Test PYUSD comes from the [Google Cloud Web3 faucet](https://cloud.google.com/application/web3/faucet) or the [Paxos faucet](https://faucet.paxos.com).
 - **Not payroll:** Routewell doesn't calculate or file taxes, so it isn't for salaried staff wages. Staff expense reimbursements are supported.
 - **Demo control:** scheduled paydays run on their date. The Paydays tab has a clearly labelled "Pretend it's this day" control so you can see one now.
-- **Each visitor gets their own demo studio**, so you can try everything without affecting anyone else. "Start the demo over" gives you a fresh copy.
+- **Each visitor gets their own copy of the demo studio**, so you can try everything without affecting anyone else. "Start the demo over" gives you a fresh copy. A company you set up yourself is kept separately, and you can switch between the two.
+- **Your own company** can add people in the five countries Routewell has checked facts for so far (US, Nigeria, Pakistan, India, Philippines). PayPal payouts only arrive at PayPal sandbox accounts in this test version.
 
 ## Built with
 

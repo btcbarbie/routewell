@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { Worker } from "./ui";
 
 /** A live clock for each city where your people are. */
-export function Clocks({ workers }: { workers: Worker[] }) {
+export function Clocks({ workers, hideCounts = false }: { workers: Worker[]; hideCounts?: boolean }) {
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
     const first = setTimeout(() => setNow(new Date()), 0);
@@ -32,9 +32,11 @@ export function Clocks({ workers }: { workers: Worker[] }) {
           </div>
           <div className="flex flex-wrap justify-between gap-x-2 text-xs text-ink-soft">
             <span>{p.city}</span>
-            <span className="whitespace-nowrap font-mono text-[11px] font-semibold text-ink">
-              {p.count} {p.count === 1 ? "person" : "people"}
-            </span>
+            {!hideCounts && (
+              <span className="whitespace-nowrap font-mono text-[11px] font-semibold text-ink">
+                {p.count} {p.count === 1 ? "person" : "people"}
+              </span>
+            )}
           </div>
         </div>
       ))}

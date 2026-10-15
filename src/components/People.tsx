@@ -2,13 +2,27 @@
 
 import { useState } from "react";
 import type { Snapshot } from "@/lib/state";
+import { AddPerson } from "./AddPerson";
 import { Btn, Rail, SectionTitle, shortAddress } from "./ui";
 
-export function People({ s }: { s: Snapshot }) {
+export function People({ s, change }: { s: Snapshot; change: (body: object) => Promise<boolean> }) {
   const [copied, setCopied] = useState<string | null>(null);
+  const [adding, setAdding] = useState(s.workers.length === 0);
   return (
     <div className="pt-8">
-      <SectionTitle hint="What works in each person's country comes from a checked list, not the AI">Your people</SectionTitle>
+      <SectionTitle
+        hint={
+          !adding && (
+            <Btn onClick={() => setAdding(true)} className="!py-1.5">
+              Add a person
+            </Btn>
+          )
+        }
+      >
+        Your people
+      </SectionTitle>
+      {adding && <AddPerson countries={s.countries} add={change} onDone={() => setAdding(false)} />}
+      {s.workers.length > 0 && <p className="-mt-1 mb-3 text-[13px] text-ink-soft">What works in each person&apos;s country comes from a checked list with sources, not from the AI.</p>}
       <div className="grid gap-3.5 md:grid-cols-2">
         {s.workers.map((w) => {
           const facts = s.countries[w.country];
@@ -71,6 +85,9 @@ export function People({ s }: { s: Snapshot }) {
                   Open it
                 </a>
                 {w.choiceUpdatedAt && <span className="text-xs text-ink-soft">Updated by them {new Date(w.choiceUpdatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>}
+                <Btn variant="ghost" className="ml-auto text-ink-soft" onClick={() => change({ remove: w.id })}>
+                  Remove
+                </Btn>
               </div>
             </article>
           );

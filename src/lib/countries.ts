@@ -6,6 +6,7 @@ export type CountryFacts = {
   name: string;
   currency: string;
   currencySymbol: string;
+  timezone: string; // default for people added in this country
   paypal: { canReceive: boolean; note: string };
   pyusd: { allowed: boolean; note: string };
   sources: { label: string; url: string }[];
@@ -14,6 +15,7 @@ export type CountryFacts = {
 export const COUNTRIES: Record<string, CountryFacts> = {
   US: {
     code: "US",
+    timezone: "America/New_York",
     name: "United States",
     currency: "USD",
     currencySymbol: "$",
@@ -23,6 +25,7 @@ export const COUNTRIES: Record<string, CountryFacts> = {
   },
   NG: {
     code: "NG",
+    timezone: "Africa/Lagos",
     name: "Nigeria",
     currency: "NGN",
     currencySymbol: "₦",
@@ -37,6 +40,7 @@ export const COUNTRIES: Record<string, CountryFacts> = {
   },
   IN: {
     code: "IN",
+    timezone: "Asia/Kolkata",
     name: "India",
     currency: "INR",
     currencySymbol: "₹",
@@ -55,6 +59,7 @@ export const COUNTRIES: Record<string, CountryFacts> = {
   },
   PH: {
     code: "PH",
+    timezone: "Asia/Manila",
     name: "Philippines",
     currency: "PHP",
     currencySymbol: "₱",
@@ -64,6 +69,7 @@ export const COUNTRIES: Record<string, CountryFacts> = {
   },
   PK: {
     code: "PK",
+    timezone: "Asia/Karachi",
     name: "Pakistan",
     currency: "PKR",
     currencySymbol: "Rs",

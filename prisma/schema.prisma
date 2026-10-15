@@ -13,6 +13,8 @@ model Workspace {
   id               String   @id @default(cuid())
   createdAt        DateTime @default(now())
   companyName      String
+  // true for the shared-style demo studio, false for a company someone set up themselves
+  isDemo           Boolean  @default(true)
   // Scheduled paydays never spend more than this per month without asking.
   paydayBudgetCents Int     @default(300000)
   autopilotPaused  Boolean  @default(false)

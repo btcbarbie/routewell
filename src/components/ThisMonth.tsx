@@ -20,6 +20,7 @@ export function ThisMonth({
   propose,
   apply,
   openHistory,
+  openPeople,
 }: {
   s: Snapshot;
   busy: string | null;
@@ -29,6 +30,7 @@ export function ThisMonth({
   propose: (text: string) => Promise<Proposal | null>;
   apply: (p: Proposal) => Promise<boolean>;
   openHistory: () => void;
+  openPeople: () => void;
 }) {
   const [view, setView] = useState<"envelopes" | "table">("envelopes");
   const envelopes = (s.draft?.envelopes.filter((e) => e.status === "DRAFT") ?? []).sort(
@@ -92,6 +94,16 @@ export function ThisMonth({
           ) : (
             <p className="mt-2 font-hand text-[19px]">Waiting for PayPal to finish. This page checks again by itself.</p>
           )}
+        </section>
+      )}
+
+      {s.workers.length === 0 && (
+        <section className="mb-7 rounded-[4px] border-2 border-ink bg-acid p-5">
+          <h2 className="font-display text-xl font-bold">Add the people you pay first</h2>
+          <p className="mt-1 text-sm">Their name, country, and how they want to be paid. Then come back here to pay them.</p>
+          <Btn variant="secondary" className="mt-3" onClick={openPeople}>
+            Add a person
+          </Btn>
         </section>
       )}
 
