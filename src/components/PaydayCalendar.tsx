@@ -1,14 +1,31 @@
 "use client";
 
-import { useMemo } from "react";
-import { BryntumCalendar } from "@bryntum/calendar-react";
-import type { EventModelConfig } from "@bryntum/calendar";
-import "@bryntum/calendar/calendar.css";
-import "@bryntum/calendar/stockholm-light.css";
-import "@bryntum/calendar/fontawesome/css/fontawesome.css";
-import "@bryntum/calendar/fontawesome/css/solid.css";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { Calendar, EventModelConfig } from "@bryntum/calendar";
 import type { Snapshot } from "@/lib/state";
 import { dollars } from "./ui";
+
+// Bryntum Calendar is loaded straight into the browser from public/vendor (copied there at install time),
+// so the production build doesn't have to process its 5 MB module.
+const BASE = "/vendor/bryntum";
+type BryntumModule = typeof import("@bryntum/calendar");
+let loading: Promise<BryntumModule> | null = null;
+
+function loadBryntum(): Promise<BryntumModule> {
+  if (!loading) {
+    for (const href of [`${BASE}/calendar.css`, `${BASE}/stockholm-light.css`, `${BASE}/fontawesome/css/fontawesome.css`, `${BASE}/fontawesome/css/solid.css`]) {
+      if (!document.querySelector(`link[href="${href}"]`)) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = href;
+        document.head.appendChild(link);
+      }
+    }
+    const url = `${BASE}/calendar.module.js`;
+    loading = import(/* webpackIgnore: true */ url) as Promise<BryntumModule>;
+  }
+  return loading;
+}
 
 const ORANGE = "#ff5a1f";
 const GREEN = "#2f6b4f";
@@ -16,7 +33,15 @@ const INK = "#1b2a4a";
 
 /** Scheduled paydays for this month and the next two, plus paydays already paid. Drag an upcoming payday to move it. */
 export function PaydayCalendar({ s, move }: { s: Snapshot; move: (scheduleId: string, day: number) => Promise<boolean> }) {
+  const host = useRef<HTMLDivElement>(null);
+  const cal = useRef<Calendar | null>(null);
+  const moveRef = useRef(move);
+  const [failed, setFailed] = useState(false);
   const today = useMemo(() => new Date(`${s.today}T12:00:00Z`), [s.today]);
+
+  useEffect(() => {
+    moveRef.current = move;
+  }, [move]);
 
   const events: EventModelConfig[] = useMemo(() => {
     const out: EventModelConfig[] = [];
@@ -60,27 +85,54 @@ export function PaydayCalendar({ s, move }: { s: Snapshot; move: (scheduleId: st
     return out;
   }, [s.schedules, s.runs, s.workers, today]);
 
+  // Create the calendar once, with whatever data is current when Bryntum finishes loading.
+  const latest = useRef({ events, today });
+  useEffect(() => {
+    latest.current = { events, today };
+    if (cal.current) cal.current.eventStore.data = events;
+  }, [events, today]);
+
+  useEffect(() => {
+    let disposed = false;
+    loadBryntum()
+      .then(({ Calendar }) => {
+        if (disposed || !host.current) return;
+        cal.current = new Calendar({
+          appendTo: host.current,
+          date: latest.current.today,
+          mode: "month",
+          modes: { day: null, week: null, year: null, agenda: null },
+          sidebar: false,
+          events: latest.current.events,
+          features: {
+            eventEdit: false,
+            eventMenu: false,
+            scheduleMenu: false,
+            eventCopyPaste: false,
+            drag: { creatable: false },
+          },
+          listeners: {
+            beforeDragMoveEnd({ eventRecord, newStartDate }: { eventRecord: { id: string | number }; newStartDate: Date }) {
+              const [scheduleId] = String(eventRecord.id).split("|");
+              const day = newStartDate.getDate();
+              if (day <= 28) void moveRef.current(scheduleId, day);
+              return false; // the calendar redraws from the saved schedule
+            },
+          },
+        });
+      })
+      .catch(() => setFailed(true));
+    return () => {
+      disposed = true;
+      cal.current?.destroy();
+      cal.current = null;
+    };
+  }, []);
+
   return (
-    <div className="routewell-calendar h-[560px] overflow-hidden rounded-[4px] border-2 border-ink">
-      <BryntumCalendar
-        date={today}
-        mode="month"
-        modes={{ day: null, week: null, year: null, agenda: null }}
-        sidebar={false}
-        events={events}
-        eventEditFeature={false}
-        eventMenuFeature={false}
-        scheduleMenuFeature={false}
-        eventCopyPasteFeature={false}
-        dragFeature={{ creatable: false }}
-        onBeforeDragMoveEnd={({ eventRecord, newStartDate }) => {
-          const [scheduleId] = String(eventRecord.id).split("|");
-          const day = newStartDate.getDate();
-          if (day > 28) return false;
-          void move(scheduleId, day);
-          return false; // the calendar redraws from the saved schedule
-        }}
-      />
+    <div className="routewell-calendar relative h-[560px] overflow-hidden rounded-[4px] border-2 border-ink bg-paper-hi">
+      {failed && <p className="p-4 text-sm">The calendar couldn&apos;t load. Refresh the page to try again.</p>}
+      <div ref={host} className="h-full" />
     </div>
   );
 }

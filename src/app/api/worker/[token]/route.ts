@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { handle } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
 import { COUNTRIES, allowedMethods } from "@/lib/countries";
@@ -27,6 +28,7 @@ function view(w: Awaited<ReturnType<typeof load>>) {
 }
 
 export async function GET(_req: Request, ctx: RouteContext<"/api/worker/[token]">) {
+  await connection();
   return handle(async () => view(await load((await ctx.params).token)));
 }
 

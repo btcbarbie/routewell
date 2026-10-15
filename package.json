@@ -10,12 +10,11 @@
     "wallets": "tsx scripts/wallets.ts",
     "proof:payouts": "tsx scripts/proof-payouts.ts",
     "proof:pyusd": "tsx scripts/proof-pyusd.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate && node scripts/copy-bryntum.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.134.0",
     "@bryntum/calendar": "npm:@bryntum/calendar-trial@^7.3.7",
-    "@bryntum/calendar-react": "^7.3.7",
     "@prisma/adapter-better-sqlite3": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "@solana/spl-token": "^0.4.15",
@@ -45,6 +44,6 @@
     "typescript": "^5"
   },
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   }
 }
