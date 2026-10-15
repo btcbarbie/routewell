@@ -2,6 +2,8 @@
 
 **Everyone gets paid.**
 
+**Live demo:** https://routewell-production.up.railway.app (PayPal sandbox and Solana devnet, test money only)
+
 Routewell helps small teams pay contractors and pay back staff expenses, wherever they live. Drop in this month's messages, spreadsheets and receipt photos. An AI turns them into one pay envelope per person and checks each one. You approve, and everyone is paid in one go: through PayPal, or in PYUSD to their own wallet when PayPal can't reach them.
 
 > Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/). Everything runs on PayPal's sandbox and Solana devnet, with test money only.
