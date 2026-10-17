@@ -127,7 +127,7 @@ export function Home() {
         <p className="mt-2 max-w-2xl text-ink-soft">Each person only sees the payout options that work where they live, and where they&apos;re legal.</p>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           {[
-            ["Nigeria", "For nearly 20 years, Nigerian PayPal accounts could send money but not receive it. Receiving only arrived in January 2026."],
+            ["Nigeria", "For nearly 20 years, Nigerian PayPal accounts could only send money. Nigeria still isn't on PayPal's list of countries that can receive Payouts."],
             ["Pakistan", "PayPal doesn't operate in Pakistan. Freelancers there can't open an account to get paid."],
             ["India", "PayPal converts every payment to rupees. With PYUSD, people can keep their pay in dollars."],
           ].map(([country, body]) => (

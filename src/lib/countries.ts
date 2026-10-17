@@ -1,5 +1,6 @@
 // Hand-checked payout facts per country. The AI never invents these; it only reads them.
 // Checked October 2026. Sources are listed per country and shown in the app.
+// paypal.canReceive means "can be paid through PayPal Payouts", per PayPal's Payouts country list.
 
 export type CountryFacts = {
   code: string;
@@ -30,11 +31,12 @@ export const COUNTRIES: Record<string, CountryFacts> = {
     currency: "NGN",
     currencySymbol: "₦",
     paypal: {
-      canReceive: true,
-      note: "Receiving only became possible in January 2026, through a linked Paga wallet. For nearly 20 years Nigerian accounts could send but not receive.",
+      canReceive: false,
+      note: "Nigeria isn't on PayPal's list of countries that can receive Payouts. Since January 2026 Nigerians can receive some PayPal payments through a linked Paga wallet, but for nearly 20 years they couldn't receive at all.",
     },
     pyusd: { allowed: true, note: "Arrives as digital dollars in their own wallet, so it keeps its dollar value." },
     sources: [
+      { label: "PayPal Payouts countries", url: "https://developer.paypal.com/payouts/supported-features" },
       { label: "PayPal returns to Nigeria through Paga (Jan 2026)", url: "https://allafrica.com/stories/202601270689.html" },
     ],
   },
@@ -79,6 +81,7 @@ export const COUNTRIES: Record<string, CountryFacts> = {
       note: "Holding crypto is legal under Pakistan's Virtual Assets Act 2026, through licensed platforms. It isn't legal tender.",
     },
     sources: [
+      { label: "PayPal Payouts countries", url: "https://developer.paypal.com/payouts/supported-features" },
       { label: "PayPal still unavailable in Pakistan (2026)", url: "https://www.jobbers.io/best-ways-to-receive-international-payments-in-pakistan-beyond-paypal/" },
       { label: "Pakistan Virtual Assets Act 2026", url: "https://cryptoslate.com/crypto-laws/pakistan-virtual-assets-act-2026-pvara/" },
     ],
