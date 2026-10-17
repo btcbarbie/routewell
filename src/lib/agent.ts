@@ -134,7 +134,7 @@ function tools(ctx: Ctx) {
 
   const lookCountry = betaZodTool({
     name: "look_up_country_rules",
-    description: "The checked facts for a country: whether PayPal Payouts can pay people there, whether PYUSD is allowed, with sources. Use the 2-letter country code, like US, NG, IN, PH, PK, GH, KE, BD or EG.",
+    description: "The checked facts for a country: whether PayPal Payouts can pay people there, whether PYUSD is allowed, with sources. Use the 2-letter country code, like US, NG, IN, PH, PK, GH or KE.",
     inputSchema: z.object({ country: z.string() }),
     run: ({ country }) =>
       guarded(ctx, async () => {

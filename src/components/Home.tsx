@@ -31,11 +31,6 @@ const GAPS = [
   },
 ];
 
-const NO_ROUTE = Object.values(COUNTRIES)
-  .filter((c) => !c.paypal.canReceive && !c.pyusd.allowed)
-  .map((c) => c.name)
-  .join(" and ");
-
 const GAP_COUNTRIES = Object.values(COUNTRIES)
   .filter((c) => !c.paypal.canReceive && c.pyusd.allowed)
   .map((c) => c.name)
@@ -158,7 +153,7 @@ export function Home() {
           ))}
         </div>
         <p className="mt-4 text-[13px] text-ink-soft">
-          Countries PayPal Payouts can&apos;t reach, where Routewell pays in PYUSD: {GAP_COUNTRIES}. Where neither is allowed, like {NO_ROUTE}, Routewell says so instead of pretending.{" "}
+          Countries PayPal Payouts can&apos;t reach, where Routewell pays in PYUSD: {GAP_COUNTRIES}.{" "}
           <a href="https://developer.paypal.com/payouts/supported-features" target="_blank" rel="noreferrer" className="underline underline-offset-2">
             PayPal&apos;s Payouts country list
           </a>

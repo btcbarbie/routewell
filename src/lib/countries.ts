@@ -118,32 +118,6 @@ export const COUNTRIES: Record<string, CountryFacts> = {
       { label: "Kenya Virtual Asset Service Providers Act 2025", url: "https://cryptoslate.com/crypto-laws/kenya-virtual-asset-service-providers-act-2025/" },
     ],
   },
-  BD: {
-    code: "BD",
-    timezone: "Asia/Dhaka",
-    name: "Bangladesh",
-    currency: "BDT",
-    currencySymbol: "৳",
-    paypal: { canReceive: false, note: "Bangladesh isn't on PayPal's list of countries that can receive Payouts." },
-    pyusd: { allowed: false, note: "Bangladesh Bank prohibits dealing in crypto, so Routewell doesn't offer PYUSD there." },
-    sources: [
-      { label: "PayPal Payouts countries", url: "https://developer.paypal.com/payouts/supported-features" },
-      { label: "Bangladesh Bank: refrain from virtual assets", url: "https://www.tbsnews.net/economy/banking/refrain-dealing-virtual-assets-currencies-bb-497086" },
-    ],
-  },
-  EG: {
-    code: "EG",
-    timezone: "Africa/Cairo",
-    name: "Egypt",
-    currency: "EGP",
-    currencySymbol: "E£",
-    paypal: { canReceive: false, note: "Egypt isn't on PayPal's list of countries that can receive Payouts." },
-    pyusd: { allowed: false, note: "Egypt's banking law bars crypto dealings without central bank approval, which no one has, so Routewell doesn't offer PYUSD there." },
-    sources: [
-      { label: "PayPal Payouts countries", url: "https://developer.paypal.com/payouts/supported-features" },
-      { label: "Crypto and Egypt's Law 194 of 2020", url: "https://eg.andersen.com/legality-cryptocurrency-in-egypt/" },
-    ],
-  },
 };
 
 export function countryFacts(code: string): CountryFacts | undefined {
