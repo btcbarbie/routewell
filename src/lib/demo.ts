@@ -119,3 +119,14 @@ export async function createDemoWorkspace() {
 
   return ws;
 }
+
+// Demo copies made before usual amounts existed get them filled in, matched by name.
+const DEMO_USUAL: Record<string, number> = { "Adaeze Okafor": 2400, "Ali Raza": 2000, "Rohan Mehta": 36000, "Maria Santos": 80000, "Jordan Lee": 150000 };
+
+export async function backfillDemoUsual(workspaceId: string) {
+  const workers = await prisma.worker.findMany({ where: { workspaceId }, select: { id: true, name: true, usualCents: true } });
+  if (workers.some((w) => w.usualCents !== null)) return;
+  for (const w of workers) {
+    if (DEMO_USUAL[w.name]) await prisma.worker.update({ where: { id: w.id }, data: { usualCents: DEMO_USUAL[w.name] } });
+  }
+}

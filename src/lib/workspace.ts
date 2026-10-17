@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
-import { createDemoWorkspace, DEMO_RULES } from "./demo";
+import { backfillDemoUsual, createDemoWorkspace, DEMO_RULES } from "./demo";
 
 // Cookies: which workspace you're looking at now, your copy of the demo studio, and the company you set up yourself.
 const CURRENT = "rw_ws";
@@ -22,7 +22,10 @@ async function setCookie(name: string, value: string) {
 export async function workspaceId(): Promise<string> {
   const jar = await cookies();
   const current = await exists(jar.get(CURRENT)?.value);
-  if (current) return current.id;
+  if (current) {
+    if (current.isDemo) await backfillDemoUsual(current.id);
+    return current.id;
+  }
   return openDemo();
 }
 
@@ -31,6 +34,7 @@ export async function openDemo(): Promise<string> {
   const jar = await cookies();
   const demo = await exists(jar.get(DEMO)?.value);
   const id = demo?.id ?? (await createDemoWorkspace()).id;
+  if (demo) await backfillDemoUsual(id);
   await setCookie(DEMO, id);
   await setCookie(CURRENT, id);
   return id;
