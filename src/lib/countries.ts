@@ -86,6 +86,64 @@ export const COUNTRIES: Record<string, CountryFacts> = {
       { label: "Pakistan Virtual Assets Act 2026", url: "https://cryptoslate.com/crypto-laws/pakistan-virtual-assets-act-2026-pvara/" },
     ],
   },
+  GH: {
+    code: "GH",
+    timezone: "Africa/Accra",
+    name: "Ghana",
+    currency: "GHS",
+    currencySymbol: "GH₵",
+    paypal: { canReceive: false, note: "Ghana isn't on PayPal's list of countries that can receive Payouts." },
+    pyusd: {
+      allowed: true,
+      note: "Crypto is regulated under Ghana's Virtual Asset Service Providers Act 2025, with licensing being rolled out in 2026.",
+    },
+    sources: [
+      { label: "PayPal Payouts countries", url: "https://developer.paypal.com/payouts/supported-features" },
+      { label: "Ghana Virtual Asset Service Providers Act 2025", url: "https://cryptoslate.com/crypto-laws/ghana-virtual-asset-service-providers-act-2025-act-1154/" },
+    ],
+  },
+  KE: {
+    code: "KE",
+    timezone: "Africa/Nairobi",
+    name: "Kenya",
+    currency: "KES",
+    currencySymbol: "KSh",
+    paypal: { canReceive: true, note: "Paid in dollars to PayPal." },
+    pyusd: {
+      allowed: true,
+      note: "Crypto is regulated under Kenya's Virtual Asset Service Providers Act 2025. Kenya's central bank can restrict foreign stablecoins on licensed platforms.",
+    },
+    sources: [
+      { label: "PayPal Payouts countries", url: "https://developer.paypal.com/payouts/supported-features" },
+      { label: "Kenya Virtual Asset Service Providers Act 2025", url: "https://cryptoslate.com/crypto-laws/kenya-virtual-asset-service-providers-act-2025/" },
+    ],
+  },
+  BD: {
+    code: "BD",
+    timezone: "Asia/Dhaka",
+    name: "Bangladesh",
+    currency: "BDT",
+    currencySymbol: "৳",
+    paypal: { canReceive: false, note: "Bangladesh isn't on PayPal's list of countries that can receive Payouts." },
+    pyusd: { allowed: false, note: "Bangladesh Bank prohibits dealing in crypto, so Routewell doesn't offer PYUSD there." },
+    sources: [
+      { label: "PayPal Payouts countries", url: "https://developer.paypal.com/payouts/supported-features" },
+      { label: "Bangladesh Bank: refrain from virtual assets", url: "https://www.tbsnews.net/economy/banking/refrain-dealing-virtual-assets-currencies-bb-497086" },
+    ],
+  },
+  EG: {
+    code: "EG",
+    timezone: "Africa/Cairo",
+    name: "Egypt",
+    currency: "EGP",
+    currencySymbol: "E£",
+    paypal: { canReceive: false, note: "Egypt isn't on PayPal's list of countries that can receive Payouts." },
+    pyusd: { allowed: false, note: "Egypt's banking law bars crypto dealings without central bank approval, which no one has, so Routewell doesn't offer PYUSD there." },
+    sources: [
+      { label: "PayPal Payouts countries", url: "https://developer.paypal.com/payouts/supported-features" },
+      { label: "Crypto and Egypt's Law 194 of 2020", url: "https://eg.andersen.com/legality-cryptocurrency-in-egypt/" },
+    ],
+  },
 };
 
 export function countryFacts(code: string): CountryFacts | undefined {

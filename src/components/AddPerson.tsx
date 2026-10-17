@@ -7,14 +7,14 @@ import { Btn } from "./ui";
 type Countries = Snapshot["countries"];
 
 export function AddPerson({ countries, add, onDone }: { countries: Countries; add: (body: object) => Promise<boolean>; onDone: () => void }) {
-  const codes = Object.keys(countries);
+  const codes = Object.keys(countries).sort((a, b) => countries[a].name.localeCompare(countries[b].name));
   const [f, setF] = useState({
     name: "",
     role: "CONTRACTOR" as "CONTRACTOR" | "STAFF",
     work: "",
     rateNote: "",
     usualAmountUsd: "",
-    country: codes[0],
+    country: "US",
     city: "",
     payoutMethod: "PAYPAL" as "PAYPAL" | "PYUSD",
     paypalEmail: "",
@@ -84,37 +84,49 @@ export function AddPerson({ countries, add, onDone }: { countries: Countries; ad
         </label>
       </div>
 
-      <fieldset className="mt-4 text-sm font-semibold">
-        Pay them through
-        <div className="mt-2 flex flex-wrap gap-4 font-normal">
-          {allowed.map((m) => (
-            <label key={m} className="flex cursor-pointer items-center gap-1.5">
-              <input type="radio" checked={method === m} onChange={() => set({ payoutMethod: m })} className="accent-[#ff5a1f]" />
-              {m === "PAYPAL" ? "PayPal" : "PYUSD to their own wallet"}
-            </label>
-          ))}
+      {allowed.length === 0 ? (
+        <div className="mt-4 rounded-[3px] border-2 border-orange px-3 py-2.5 text-sm">
+          <p className="font-semibold">Routewell can&apos;t pay people in {c.name} yet.</p>
+          <p className="mt-1 text-ink-soft">{c.paypal.note}</p>
+          <p className="mt-1 text-ink-soft">{c.pyusd.note}</p>
         </div>
-        <p className="mt-1 font-normal text-ink-soft">{method === "PAYPAL" ? c.paypal.note : c.pyusd.note}</p>
-        {!c.paypal.canReceive && <p className="mt-1 font-normal text-ink-soft">PayPal isn&apos;t an option: {c.paypal.note}</p>}
-      </fieldset>
-      {method === "PAYPAL" ? (
-        <label className="mt-3 block text-sm font-semibold">
-          Their PayPal email
-          <input className={input} type="email" value={f.paypalEmail} onChange={(e) => set({ paypalEmail: e.target.value })} placeholder="amina@example.com" />
-          <span className="mt-1 block font-normal text-ink-soft">In this test version, money only arrives at PayPal sandbox accounts.</span>
-        </label>
       ) : (
-        <label className="mt-3 block text-sm font-semibold">
-          Their Solana wallet address
-          <input className={`${input} font-mono text-sm`} value={f.walletAddress} onChange={(e) => set({ walletAddress: e.target.value })} placeholder="From their wallet app" />
-          <span className="mt-1 block font-normal text-ink-soft">They can change it later from their own payout link.</span>
-        </label>
+        <>
+      <fieldset className="mt-4 text-sm font-semibold">
+          Pay them through
+          <div className="mt-2 flex flex-wrap gap-4 font-normal">
+            {allowed.map((m) => (
+              <label key={m} className="flex cursor-pointer items-center gap-1.5">
+                <input type="radio" checked={method === m} onChange={() => set({ payoutMethod: m })} className="accent-[#ff5a1f]" />
+                {m === "PAYPAL" ? "PayPal" : "PYUSD to their own wallet"}
+              </label>
+            ))}
+          </div>
+          <p className="mt-1 font-normal text-ink-soft">{method === "PAYPAL" ? c.paypal.note : c.pyusd.note}</p>
+          {!c.paypal.canReceive && <p className="mt-1 font-normal text-ink-soft">PayPal isn&apos;t an option: {c.paypal.note}</p>}
+        </fieldset>
+        {method === "PAYPAL" ? (
+          <label className="mt-3 block text-sm font-semibold">
+            Their PayPal email
+            <input className={input} type="email" value={f.paypalEmail} onChange={(e) => set({ paypalEmail: e.target.value })} placeholder="amina@example.com" />
+            <span className="mt-1 block font-normal text-ink-soft">In this test version, money only arrives at PayPal sandbox accounts.</span>
+          </label>
+        ) : (
+          <label className="mt-3 block text-sm font-semibold">
+            Their Solana wallet address
+            <input className={`${input} font-mono text-sm`} value={f.walletAddress} onChange={(e) => set({ walletAddress: e.target.value })} placeholder="From their wallet app" />
+            <span className="mt-1 block font-normal text-ink-soft">They can change it later from their own payout link.</span>
+          </label>
+        )}
+        </>
       )}
 
       <div className="mt-4 flex gap-2">
-        <Btn type="submit" disabled={busy}>
-          {busy ? "Adding…" : "Add them"}
-        </Btn>
+        {allowed.length > 0 && (
+          <Btn type="submit" disabled={busy}>
+            {busy ? "Adding…" : "Add them"}
+          </Btn>
+        )}
         <Btn variant="ghost" onClick={onDone}>
           Cancel
         </Btn>

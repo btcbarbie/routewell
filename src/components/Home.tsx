@@ -3,8 +3,43 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { COUNTRIES } from "@/lib/countries";
 import { Clocks } from "./Clocks";
 import { AiNote, Btn, Rail, Stamp, type Worker } from "./ui";
+
+// The gaps in PayPal Payouts that Routewell fills. Every claim here is backed by PayPal's own docs or Routewell's code.
+const GAPS = [
+  {
+    title: "It can't reach them",
+    payouts: "Nigeria and Pakistan aren't on PayPal's list of countries that can receive Payouts.",
+    routewell: "Pays them in PYUSD, digital dollars, to their own wallet, where that's legal.",
+  },
+  {
+    title: "They can't keep dollars",
+    payouts: "In India, PayPal converts every payment to rupees and sends it to the bank.",
+    routewell: "Lets each person choose PYUSD instead, so their pay stays in dollars.",
+  },
+  {
+    title: "It doesn't check the amount",
+    payouts: "Sends whatever list of amounts you give it.",
+    routewell: "AI checks every payment first: hours that don't match, a receipt already paid back, an amount far above usual.",
+  },
+  {
+    title: "It stops at \u201cfailed\u201d",
+    payouts: "Tells you a payment failed or hasn't been claimed, and leaves the rest to you.",
+    routewell: "The agent follows up: carries failures to the next pay run for your OK, writes reminders, and never pays anyone twice.",
+  },
+];
+
+const NO_ROUTE = Object.values(COUNTRIES)
+  .filter((c) => !c.paypal.canReceive && !c.pyusd.allowed)
+  .map((c) => c.name)
+  .join(" and ");
+
+const GAP_COUNTRIES = Object.values(COUNTRIES)
+  .filter((c) => !c.paypal.canReceive && c.pyusd.allowed)
+  .map((c) => c.name)
+  .join(", ");
 
 type Session = { demo: { name: string } | null; mine: { name: string } | null };
 
@@ -79,7 +114,7 @@ export function Home() {
             gets <em className="not-italic text-orange">paid.</em>
           </h1>
           <p className="mt-5 max-w-md text-lg leading-relaxed text-ink-soft">
-            Routewell pays the people who work for you, in any country. AI checks every payment first. Then everyone is paid at once: through PayPal, or in digital dollars (PYUSD) where PayPal can&apos;t reach.
+            PayPal Payouts pays many people at once, but it can&apos;t pay freelancers in Nigeria or Pakistan, and it sends whatever amounts you give it. Routewell fills those gaps, and uses PayPal Payouts everywhere it works.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
             {ownButton}
@@ -92,15 +127,42 @@ export function Home() {
         <div className="space-y-4" aria-label="Example pay envelopes">
           <SampleEnvelope name="Adaeze Okafor" place="Lagos, Nigeria · 3 icons" amount="$36.00" method="PYUSD" stamp="CHECKED" note="3 icons × $12, same rate as last month. She's paid in PYUSD, so it stays in dollars." />
           <SampleEnvelope
-            name="Sam Carter"
-            place="Austin, United States · Lunch receipt"
-            amount="$50.80"
+            name="Maria Santos"
+            place="Manila, Philippines · 36 hours"
+            amount="$900.00"
             method="PAYPAL"
             stamp="LOOK_AGAIN"
-            note="The receipt is $81.28 but includes $24 of wine. Your rules say no alcohol, so I took it out."
+            note="Her message says 38 hours, but the sheet says 36. I used the sheet. Check the $50 difference before paying."
             loud
           />
         </div>
+      </section>
+
+      {/* The gaps */}
+      <section className="border-t-2 border-ink py-10">
+        <h2 className="max-w-2xl font-display text-3xl font-bold">Where PayPal Payouts stops, Routewell starts</h2>
+        <p className="mt-2 max-w-2xl text-ink-soft">Routewell is built on PayPal Payouts. It adds what Payouts leaves to you.</p>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {GAPS.map((g) => (
+            <div key={g.title} className="rounded-[4px] border-2 border-ink bg-paper-hi p-4">
+              <h3 className="font-display text-xl font-bold">{g.title}</h3>
+              <p className="mt-2 text-[15px] text-ink-soft">
+                <span className="mr-1.5 font-mono text-[11px] font-semibold tracking-wider text-ink-soft">PAYPAL PAYOUTS</span>
+                {g.payouts}
+              </p>
+              <p className="mt-1.5 text-[15px]">
+                <span className="mr-1.5 font-mono text-[11px] font-semibold tracking-wider text-orange">ROUTEWELL</span>
+                {g.routewell}
+              </p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 text-[13px] text-ink-soft">
+          Countries PayPal Payouts can&apos;t reach, where Routewell pays in PYUSD: {GAP_COUNTRIES}. Where neither is allowed, like {NO_ROUTE}, Routewell says so instead of pretending.{" "}
+          <a href="https://developer.paypal.com/payouts/supported-features" target="_blank" rel="noreferrer" className="underline underline-offset-2">
+            PayPal&apos;s Payouts country list
+          </a>
+        </p>
       </section>
 
       {/* How it works */}
@@ -121,30 +183,12 @@ export function Home() {
         </ol>
       </section>
 
-      {/* Countries */}
-      <section className="border-t-2 border-ink py-10">
-        <h2 className="max-w-2xl font-display text-3xl font-bold">When PayPal can&apos;t reach someone, PYUSD often can.</h2>
-        <p className="mt-2 max-w-2xl text-ink-soft">Each person only sees the payout options that work where they live, and where they&apos;re legal.</p>
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {[
-            ["Nigeria", "For nearly 20 years, Nigerian PayPal accounts could only send money. Nigeria still isn't on PayPal's list of countries that can receive Payouts."],
-            ["Pakistan", "PayPal doesn't operate in Pakistan. Freelancers there can't open an account to get paid."],
-            ["India", "PayPal converts every payment to rupees. With PYUSD, people can keep their pay in dollars."],
-          ].map(([country, body]) => (
-            <div key={country} className="rounded-[4px] border-2 border-dashed border-ink p-4">
-              <h3 className="font-display text-lg font-bold">{country}</h3>
-              <p className="mt-1 text-[15px] text-ink-soft">{body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Paydays */}
       <section className="grid gap-6 border-t-2 border-ink py-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-center">
         <div>
           <h2 className="font-display text-3xl font-bold">Paydays that don&apos;t get forgotten</h2>
           <p className="mt-2 text-ink-soft">
-            Say it once: &ldquo;Pay Jordan $1,500 every 28th.&rdquo; On the day, Routewell checks it&apos;s the amount you approved and within your monthly budget, then pays. Anything that looks off waits for you.
+            Say it once: &ldquo;Pay Jordan $1,500 every 28th.&rdquo; A few days before, the agent puts it in this month&apos;s pay, checks it&apos;s the amount you approved, and waits for your OK. Or let it pay automatically on the day, within your monthly budget.
           </p>
         </div>
         <div className="rounded-[4px] border-2 border-ink bg-paper-hi p-4">
@@ -153,7 +197,7 @@ export function Home() {
             <Stamp kind="SCHEDULED" />
           </div>
           <p className="font-mono text-sm">$1,500.00 on the 28th, every month</p>
-          <AiNote text="Same amount you approved. Within this month's $3,000 payday budget. Paying through PayPal." />
+          <AiNote text="Same $1,500 you approved, and it matches September. PayPal details are complete. Ready for your OK." />
         </div>
       </section>
 
