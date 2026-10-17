@@ -139,6 +139,12 @@ export function App() {
             setBusy(null);
             return !!out;
           }}
+          run={async (body) => {
+            setBusy((body as { action: string }).action === "USUAL" ? "usual" : "one");
+            const out = await post("/api/run", body);
+            setBusy(null);
+            return !!out;
+          }}
           act={async (id, body) => {
             await post(`/api/envelopes/${id}`, body);
           }}

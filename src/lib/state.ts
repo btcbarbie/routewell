@@ -73,6 +73,7 @@ export async function snapshot(workspaceId: string) {
       role: w.role,
       work: w.work,
       rateNote: w.rateNote,
+      usualCents: w.usualCents,
       country: w.country,
       countryName: COUNTRIES[w.country]?.name ?? w.country,
       currency: COUNTRIES[w.country]?.currency ?? "USD",

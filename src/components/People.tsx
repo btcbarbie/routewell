@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Snapshot } from "@/lib/state";
 import { AddPerson } from "./AddPerson";
-import { Btn, Rail, SectionTitle, shortAddress } from "./ui";
+import { Btn, Rail, SectionTitle, dollars, shortAddress, type Worker } from "./ui";
 
 export function People({ s, change }: { s: Snapshot; change: (body: object) => Promise<boolean> }) {
   const [copied, setCopied] = useState<string | null>(null);
@@ -35,6 +35,7 @@ export function People({ s, change }: { s: Snapshot; change: (body: object) => P
                     {w.city}, {w.countryName} · {w.role === "STAFF" ? "Staff" : "Contractor"} · {w.work}
                   </p>
                   <p className="font-mono text-xs text-ink-soft">{w.rateNote}</p>
+                  <UsualPay w={w} change={change} />
                 </div>
                 <Rail method={w.payoutMethod} />
               </div>
@@ -94,5 +95,35 @@ export function People({ s, change }: { s: Snapshot; change: (body: object) => P
         })}
       </div>
     </div>
+  );
+}
+
+function UsualPay({ w, change }: { w: Worker; change: (body: object) => Promise<boolean> }) {
+  const [editing, setEditing] = useState(false);
+  const [amount, setAmount] = useState(w.usualCents ? (w.usualCents / 100).toFixed(2) : "");
+  if (editing) {
+    return (
+      <form
+        className="mt-1.5 flex items-center gap-1.5 text-sm"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (await change({ setUsual: w.id, amountUsd: amount.trim() === "" ? null : Number(amount) })) setEditing(false);
+        }}
+      >
+        <span>Usual pay $</span>
+        <input autoFocus inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="none" className="w-24 rounded-[3px] border-[1.5px] border-ink bg-paper px-1.5 py-0.5 font-mono" aria-label={`${w.name}'s usual pay`} />
+        <Btn type="submit" className="!px-2 !py-0.5 text-xs">
+          Save
+        </Btn>
+      </form>
+    );
+  }
+  return (
+    <p className="mt-1.5 text-sm">
+      Usual pay: <b className="font-mono font-semibold">{w.usualCents ? dollars(w.usualCents) : "not set"}</b>{" "}
+      <button type="button" onClick={() => setEditing(true)} className="cursor-pointer text-[13px] underline underline-offset-2">
+        Change
+      </button>
+    </p>
   );
 }

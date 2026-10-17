@@ -16,7 +16,7 @@ For nearly 20 years, freelancers in Nigeria could send money with PayPal but not
 
 The homepage explains Routewell and offers two doors: **see the demo company** (Brightside Studio, already set up with 6 people in 5 countries) or **start your own** (name your company, add the people you pay, and pay them).
 
-- **Drop in this month's pay.** Paste messages, add a spreadsheet (.csv or .xlsx) and receipt photos. Claude reads them and makes one pay envelope per person, with the calculation it used ("36 hours × $25").
+- **Four ways to start this month's pay.** Pay everyone their usual amount in one click, tell the AI in plain words ("Pay everyone for October. Add a $50 bonus for Maria."), add envelopes one by one, or drop in a spreadsheet (.csv or .xlsx) and receipt photos. Every way ends with Claude checking each envelope against the person's usual amount, rate and last month's pay.
 - **An AI note on every envelope.** Each envelope says what was checked: rates, last month's pay, the sheet against the messages. Anything off is stamped **LOOK AGAIN** and explained, like hours that don't match, a receipt that was already paid back, or wine on a meal receipt when the rules say no alcohol.
 - **Receipts checked against your spending rules.** Claude reads the photo, applies your rules, and works out what can be paid back. Code also checks for the exact same receipt being sent twice.
 - **You decide.** Pay anyway, change the amount, or take an envelope out. Review everything as envelopes or as an AG Grid table you can sort, filter and edit.

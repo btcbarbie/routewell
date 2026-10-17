@@ -5,7 +5,7 @@ import type { Snapshot } from "@/lib/state";
 import type { AskResult } from "@/lib/ai";
 import { AskBar } from "./AskBar";
 import { EnvelopeCard } from "./EnvelopeCard";
-import { Intake } from "./Intake";
+import { StartRun } from "./StartRun";
 import { ReviewGrid } from "./ReviewGrid";
 import { AiNote, Btn, SectionTitle, dollars } from "./ui";
 
@@ -15,6 +15,7 @@ export function ThisMonth({
   s,
   busy,
   read,
+  run,
   act,
   send,
   propose,
@@ -25,6 +26,7 @@ export function ThisMonth({
   s: Snapshot;
   busy: string | null;
   read: (form: FormData) => Promise<boolean>;
+  run: (body: object) => Promise<boolean>;
   act: (id: string, body: object) => Promise<void>;
   send: () => Promise<void>;
   propose: (text: string) => Promise<Proposal | null>;
@@ -107,7 +109,7 @@ export function ThisMonth({
         </section>
       )}
 
-      <Intake workers={s.workers} summary={s.draft?.intakeSummary ?? null} onSubmit={read} busy={busy === "reading"} />
+      <StartRun s={s} busy={busy} read={read} run={run} />
 
       {envelopes.length > 0 && (
         <>

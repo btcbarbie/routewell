@@ -108,7 +108,7 @@ export function Home() {
         <h2 className="font-display text-3xl font-bold">How it works</h2>
         <ol className="mt-6 grid gap-4 md:grid-cols-3">
           {[
-            ["Add this month's pay", "Drop in the messages your people send you, a spreadsheet of hours, or photos of receipts."],
+            ["Add this month's pay", "Pay everyone their usual amount in one click, tell the AI what's different, add people one by one, or drop in a spreadsheet or receipts."],
             ["AI checks every envelope", "Each person gets an envelope stamped CHECKED or LOOK AGAIN, with a short note saying why."],
             ["Seal and send", "You approve, and everyone is paid at once. Then you see who got it, who hasn't claimed it, and why."],
           ].map(([title, body], i) => (

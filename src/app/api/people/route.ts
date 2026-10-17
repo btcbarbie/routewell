@@ -2,6 +2,7 @@ import { handle } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
 import { COUNTRIES, allowedMethods } from "@/lib/countries";
 import { isValidAddress } from "@/lib/solana";
+import { dollars, toCents } from "@/lib/money";
 import { snapshot } from "@/lib/state";
 import { workspaceId, log } from "@/lib/workspace";
 
@@ -15,12 +16,26 @@ type AddBody = {
   payoutMethod: "PAYPAL" | "PYUSD";
   paypalEmail?: string;
   walletAddress?: string;
+  usualAmountUsd?: number | string;
 };
 
 export async function POST(req: Request) {
   return handle(async () => {
     const ws = await workspaceId();
-    const body = (await req.json()) as AddBody | { remove: string };
+    const body = (await req.json()) as AddBody | { remove: string } | { setUsual: string; amountUsd: number | null };
+
+    if ("setUsual" in body) {
+      const w = await prisma.worker.findFirst({ where: { id: body.setUsual, workspaceId: ws } });
+      if (!w) throw new Error("Person not found.");
+      let usualCents: number | null = null;
+      if (body.amountUsd !== null && String(body.amountUsd).trim() !== "") {
+        usualCents = toCents(Number(body.amountUsd));
+        if (!Number.isFinite(usualCents) || usualCents <= 0 || usualCents > 10_000_00) throw new Error("Enter an amount between $0.01 and $10,000, or leave it empty.");
+      }
+      await prisma.worker.update({ where: { id: w.id }, data: { usualCents } });
+      await log(ws, "YOU", usualCents ? `Set ${w.name}'s usual pay to ${dollars(usualCents)}.` : `Cleared ${w.name}'s usual pay.`);
+      return snapshot(ws);
+    }
 
     if ("remove" in body) {
       const w = await prisma.worker.findFirst({ where: { id: body.remove, workspaceId: ws }, include: { _count: { select: { envelopes: true } } } });
@@ -48,6 +63,11 @@ export async function POST(req: Request) {
       if (!isValidAddress(walletAddress)) throw new Error("Enter their Solana wallet address.");
     }
     const role = body.role === "STAFF" ? "STAFF" : "CONTRACTOR";
+    let usualCents: number | null = null;
+    if (body.usualAmountUsd !== undefined && String(body.usualAmountUsd).trim() !== "") {
+      usualCents = toCents(Number(body.usualAmountUsd));
+      if (!Number.isFinite(usualCents) || usualCents <= 0 || usualCents > 10_000_00) throw new Error("Enter a usual amount between $0.01 and $10,000, or leave it empty.");
+    }
     await prisma.worker.create({
       data: {
         workspaceId: ws,
@@ -59,6 +79,7 @@ export async function POST(req: Request) {
         city,
         timezone: country.timezone,
         payoutMethod: body.payoutMethod,
+        usualCents,
         paypalEmail,
         walletAddress,
       },

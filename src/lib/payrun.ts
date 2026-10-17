@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { Envelope, Worker } from "@prisma/client";
 import { prisma } from "./prisma";
-import { readIntake, readReceipt, summarizeResults } from "./ai";
+import { readIntake, readReceipt, reviewEnvelopes, summarizeResults } from "./ai";
 import { allowedMethods } from "./countries";
 import { dollars, monthLabel, toCents } from "./money";
 import { getBatch, sendBatch, envelopeStatusFor, PAYPAL_ERRORS } from "./paypal";
@@ -58,7 +58,7 @@ export async function processIntake(
       today,
       messageText: input.text,
       sheets: input.sheets,
-      people: ws.workers.map((w) => ({ id: w.id, name: w.name, role: w.role, work: w.work, rate: w.rateNote, country: w.country })),
+      people: ws.workers.map((w) => ({ id: w.id, name: w.name, role: w.role, work: w.work, rate: w.rateNote, usualAmount: w.usualCents ? dollars(w.usualCents) : null, country: w.country })),
       lastPaid: (lastRun?.envelopes ?? []).map((e) => ({ person: workersById.get(e.workerId ?? "")?.name, description: e.description, amount: dollars(e.amountCents) })),
       schedules: ws.schedules.map((s) => ({ person: workersById.get(s.workerId)?.name, amount: dollars(s.amountCents), day: s.dayOfMonth, note: s.note })),
     });
@@ -102,13 +102,120 @@ export async function processIntake(
   if (failed.length) summaries.push(`Couldn't read ${failed.join("; ")}`);
 
   const receiptLine = input.receipts.length ? `Read ${input.receipts.length} receipt${input.receipts.length === 1 ? "" : "s"}.` : "";
-  const all = await prisma.envelope.findMany({ where: { payRunId: run.id, status: "DRAFT" } });
-  const flagged = all.filter((e) => e.stamp === "LOOK_AGAIN" && !e.ownerDecision).length;
-  const countLine = `${all.length} envelope${all.length === 1 ? "" : "s"} ready, ${flagged} need${flagged === 1 ? "s" : ""} a look.`;
-  const intakeSummary = [...summaries, receiptLine, countLine].filter(Boolean).join(" ");
-  await prisma.payRun.update({ where: { id: run.id }, data: { intakeSummary } });
+  const intakeSummary = await summarizeDraft(run.id, [...summaries, receiptLine]);
   await log(workspaceId, "AI", intakeSummary || "Read the new pay details.");
   return { runId: run.id, summary: intakeSummary };
+}
+
+/** The line shown under the intake: what the AI read, plus how many envelopes are ready and need a look. */
+async function summarizeDraft(runId: string, lines: string[]) {
+  const all = await prisma.envelope.findMany({ where: { payRunId: runId, status: "DRAFT" } });
+  const flagged = all.filter((e) => e.stamp === "LOOK_AGAIN" && !e.ownerDecision).length;
+  const countLine = `${all.length} envelope${all.length === 1 ? "" : "s"} ready, ${flagged} need${flagged === 1 ? "s" : ""} a look.`;
+  const summary = [...lines, countLine].filter(Boolean).join(" ");
+  await prisma.payRun.update({ where: { id: runId }, data: { intakeSummary: summary } });
+  return summary;
+}
+
+// ---------- Direct ways in: everyone's usual amount, or one envelope at a time ----------
+
+/** One envelope per person with a usual amount, skipping people paid on a schedule or already in this pay run. */
+export async function addUsual(workspaceId: string) {
+  const ws = await prisma.workspace.findUniqueOrThrow({ where: { id: workspaceId }, include: { workers: true, schedules: { where: { active: true } } } });
+  const run = await draftRun(workspaceId);
+  const existing = await prisma.envelope.findMany({ where: { payRunId: run.id, status: "DRAFT" } });
+  const scheduled = new Set(ws.schedules.map((s) => s.workerId));
+  const skipped: string[] = [];
+  const created: string[] = [];
+  for (const w of ws.workers) {
+    if (scheduled.has(w.id)) {
+      skipped.push(`${w.name} (paid on a schedule)`);
+      continue;
+    }
+    if (!w.usualCents) {
+      if (w.role !== "STAFF") skipped.push(`${w.name} (no usual amount)`);
+      continue;
+    }
+    if (existing.some((e) => e.workerId === w.id && e.kind === "WORK")) {
+      skipped.push(`${w.name} (already in this pay run)`);
+      continue;
+    }
+    const e = await prisma.envelope.create({
+      data: {
+        payRunId: run.id, workerId: w.id, nameAsWritten: w.name, kind: "WORK", amountCents: w.usualCents,
+        description: `Usual pay${w.work ? `, ${w.work.toLowerCase()}` : ""}`, calculation: `Usual amount (${w.rateNote})`,
+        sourceQuote: "Pay everyone their usual", method: w.payoutMethod, stamp: "CHECKED", aiNote: "Checking…",
+      },
+    });
+    created.push(e.id);
+  }
+  if (!created.length) throw new Error(skipped.length ? `Nobody to add: ${skipped.join(", ")}.` : "Add people with a usual amount first.");
+  await reviewDraftEnvelopes(workspaceId, run.id, created);
+  const summary = await summarizeDraft(run.id, [`Made envelopes from everyone's usual amount.`, skipped.length ? `Skipped ${skipped.join(", ")}.` : ""]);
+  await log(workspaceId, "YOU", `Paid everyone their usual: ${created.length} envelope${created.length === 1 ? "" : "s"}.`);
+  await log(workspaceId, "AI", summary);
+}
+
+/** One envelope the owner typed in. */
+export async function addOne(workspaceId: string, input: { workerId: string; amountUsd: number; description: string }) {
+  const w = await prisma.worker.findFirst({ where: { id: input.workerId, workspaceId } });
+  if (!w) throw new Error("Pick who to pay.");
+  const cents = toCents(Number(input.amountUsd));
+  if (!Number.isFinite(cents) || cents <= 0 || cents > 10_000_00) throw new Error("Enter an amount between $0.01 and $10,000.");
+  const description = String(input.description ?? "").trim().slice(0, 120) || "Payment";
+  const run = await draftRun(workspaceId);
+  const e = await prisma.envelope.create({
+    data: {
+      payRunId: run.id, workerId: w.id, nameAsWritten: w.name, kind: "WORK", amountCents: cents, description,
+      sourceQuote: "Added by you", method: w.payoutMethod, stamp: "CHECKED", aiNote: "Checking…",
+    },
+  });
+  await reviewDraftEnvelopes(workspaceId, run.id, [e.id]);
+  await summarizeDraft(run.id, [`Added ${w.name}, ${dollars(cents)}.`]);
+  await log(workspaceId, "YOU", `Added ${w.name}: ${dollars(cents)} for ${description}.`);
+}
+
+/** The AI checks envelopes the owner made directly, alongside the same code checks the other ways get. */
+async function reviewDraftEnvelopes(workspaceId: string, runId: string, ids: string[]) {
+  const ws = await prisma.workspace.findUniqueOrThrow({ where: { id: workspaceId } });
+  const envelopes = await prisma.envelope.findMany({ where: { payRunId: runId, status: "DRAFT" }, include: { worker: true } });
+  const lastRun = await prisma.payRun.findFirst({
+    where: { workspaceId, status: "SENT", kind: "MANUAL", NOT: { label: { startsWith: "Expenses" } } },
+    orderBy: { sentAt: "desc" },
+    include: { envelopes: true },
+  });
+  const lastFor = (workerId: string | null) =>
+    (lastRun?.envelopes ?? []).filter((e) => e.workerId === workerId).map((e) => `${dollars(e.amountCents)} for ${e.description}`);
+  const toCheck = envelopes.filter((e) => ids.includes(e.id));
+  const others = envelopes.filter((e) => !ids.includes(e.id));
+
+  let reviews: Record<string, { note: string; issues: string[] }> = {};
+  try {
+    const out = await reviewEnvelopes({
+      today: isoDay(todayFor(ws)),
+      toCheck: toCheck.map((e) => ({
+        envelopeId: e.id, person: e.worker?.name, amount: dollars(e.amountCents), whatFor: e.description, via: e.method,
+        usualAmount: e.worker?.usualCents ? dollars(e.worker.usualCents) : null, rate: e.worker?.rateNote, paidLastMonth: lastFor(e.workerId),
+      })),
+      alsoInThisPayRun: others.map((e) => ({ person: e.worker?.name ?? e.nameAsWritten, amount: dollars(e.amountCents), whatFor: e.description })),
+    });
+    reviews = Object.fromEntries(out.reviews.map((r) => [r.envelopeId, { note: r.note, issues: r.issues }]));
+  } catch (err) {
+    // If the AI can't answer, the code checks below still run and the note says so.
+    console.error("AI review failed:", err);
+  }
+  for (const e of toCheck) {
+    const ai = reviews[e.id];
+    const issues = [...(ai?.issues ?? []), ...(e.worker ? payoutDetailIssues(e.worker, e.method) : ["Not one of your people."])];
+    await prisma.envelope.update({
+      where: { id: e.id },
+      data: {
+        aiNote: ai?.note ?? "The AI couldn't check this one. Look it over before sending.",
+        issues: JSON.stringify(ai ? issues : [...issues, "Not checked by the AI."]),
+        stamp: issues.length || !ai ? "LOOK_AGAIN" : "CHECKED",
+      },
+    });
+  }
 }
 
 async function processReceipt(

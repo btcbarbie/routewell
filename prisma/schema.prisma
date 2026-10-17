@@ -37,6 +37,8 @@ model Worker {
   role          String   // "CONTRACTOR" | "STAFF"
   work          String   // short description, e.g. "Illustration"
   rateNote      String   // e.g. "$25 per hour"
+  // What they're usually paid per pay run, if anything. Used by "Pay everyone their usual".
+  usualCents    Int?
   country       String   // ISO code, e.g. "NG"
   city          String
   timezone      String

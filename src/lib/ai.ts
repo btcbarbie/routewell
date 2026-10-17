@@ -60,7 +60,7 @@ export const IntakeResult = z.object({
       note: z.string().describe("Your margin note for this envelope, one or two short sentences."),
     }),
   ),
-  notUnderstood: z.array(z.string()).describe("Anything in the input you couldn't turn into a payment, in plain words."),
+  notUnderstood: z.array(z.string()).describe("Only things in the input you couldn't understand or act on. Not people you skipped on purpose (those go in the summary). Usually empty."),
 });
 export type IntakeResult = z.infer<typeof IntakeResult>;
 
@@ -81,6 +81,8 @@ Rules:
 - Compare with what each person was paid last month. If an amount is much higher than usual, add an issue.
 - Flag anyone who isn't on the people list.
 - Someone on a schedule (like a monthly retainer) is paid automatically on their payday. Don't make an envelope for that; mention it in the summary instead.
+- "Pay everyone" or "the usual" means one envelope per person who has a usual amount, for that amount, unless the owner says otherwise. Skip people on a schedule and people with no usual amount, and say who you skipped in the summary.
+- A usual amount that equals what the person was paid last month is fine. Don't flag it, and don't re-derive hours from it.
 - Expenses with receipts are handled separately. If a message mentions a receipt, don't make an envelope for it.
 - Never make up a payment that isn't asked for.
 ${VOICE}`;
@@ -220,4 +222,30 @@ Only report the checks you're given. Don't change any decision. ${VOICE}`;
 Payments and the code's checks:
 ${JSON.stringify(input.items, null, 2)}`;
   return structured(PaydayNotes, system, [{ type: "text", text }], "low");
+}
+
+// ---------- Review: check envelopes the owner made directly (usual amounts or one by one) ----------
+
+export const ReviewResult = z.object({
+  reviews: z.array(
+    z.object({
+      envelopeId: z.string(),
+      note: z.string().describe("Your margin note: what you compared it with and what you found."),
+      issues: z.array(z.string()).describe("Problems the owner should look at. Empty if none."),
+    }),
+  ),
+});
+
+export async function reviewEnvelopes(input: { today: string; toCheck: unknown; alsoInThisPayRun: unknown }): Promise<z.infer<typeof ReviewResult>> {
+  const system = `A small business owner added these payments directly. Check each one before any money moves.
+Compare it with the person's usual amount, their rate, and what they were paid last month. Flag an amount that's very different from usual,
+a second payment for the same person and reason already in this pay run, or anything that doesn't add up. An amount that matches the usual is fine.
+Give one review per envelope, using its envelopeId exactly. ${VOICE}`;
+  const text = `Today is ${input.today}.
+Payments to check:
+${JSON.stringify(input.toCheck, null, 2)}
+
+Already in this pay run:
+${JSON.stringify(input.alsoInThisPayRun, null, 2)}`;
+  return structured(ReviewResult, system, [{ type: "text", text }], "low");
 }

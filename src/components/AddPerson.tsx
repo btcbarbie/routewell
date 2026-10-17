@@ -13,6 +13,7 @@ export function AddPerson({ countries, add, onDone }: { countries: Countries; ad
     role: "CONTRACTOR" as "CONTRACTOR" | "STAFF",
     work: "",
     rateNote: "",
+    usualAmountUsd: "",
     country: codes[0],
     city: "",
     payoutMethod: "PAYPAL" as "PAYPAL" | "PYUSD",
@@ -75,6 +76,11 @@ export function AddPerson({ countries, add, onDone }: { countries: Countries; ad
         <label className="block text-sm font-semibold">
           Their rate <span className="font-normal text-ink-soft">(optional)</span>
           <input className={input} value={f.rateNote} onChange={(e) => set({ rateNote: e.target.value })} placeholder="$20 per hour" />
+        </label>
+        <label className="block text-sm font-semibold">
+          Usual pay each month <span className="font-normal text-ink-soft">(optional)</span>
+          <input className={`${input} font-mono`} inputMode="decimal" value={f.usualAmountUsd} onChange={(e) => set({ usualAmountUsd: e.target.value })} placeholder="800.00" />
+          <span className="mt-1 block font-normal text-ink-soft">Used by &ldquo;Pay everyone their usual&rdquo;.</span>
         </label>
       </div>
 

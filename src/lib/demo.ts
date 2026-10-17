@@ -32,15 +32,15 @@ export async function createDemoWorkspace() {
   });
 
   const w = async (data: {
-    name: string; role: string; work: string; rateNote: string; country: string; city: string; timezone: string;
+    name: string; role: string; work: string; rateNote: string; usualCents?: number; country: string; city: string; timezone: string;
     payoutMethod: string; paypalEmail?: string; walletAddress?: string;
   }) => prisma.worker.create({ data: { ...data, workspaceId: ws.id } });
 
-  const adaeze = await w({ name: "Adaeze Okafor", role: "CONTRACTOR", work: "Icon design", rateNote: "$12 per icon", country: "NG", city: "Lagos", timezone: "Africa/Lagos", payoutMethod: "PYUSD", walletAddress: adaezeWallet });
-  const ali = await w({ name: "Ali Raza", role: "CONTRACTOR", work: "Web fixes", rateNote: "$20 per bug fix", country: "PK", city: "Lahore", timezone: "Asia/Karachi", payoutMethod: "PYUSD", walletAddress: aliWallet });
-  const rohan = await w({ name: "Rohan Mehta", role: "CONTRACTOR", work: "QA testing", rateNote: "$18 per hour", country: "IN", city: "Pune", timezone: "Asia/Kolkata", payoutMethod: "PAYPAL", paypalEmail: sandboxEmail });
-  const maria = await w({ name: "Maria Santos", role: "CONTRACTOR", work: "Design production", rateNote: "$25 per hour", country: "PH", city: "Manila", timezone: "Asia/Manila", payoutMethod: "PAYPAL", paypalEmail: sandboxEmail });
-  const jordan = await w({ name: "Jordan Lee", role: "CONTRACTOR", work: "Brand strategy", rateNote: "$1,500 monthly retainer", country: "US", city: "Austin", timezone: "America/Chicago", payoutMethod: "PAYPAL", paypalEmail: sandboxEmail });
+  const adaeze = await w({ name: "Adaeze Okafor", role: "CONTRACTOR", work: "Icon design", rateNote: "$12 per icon", usualCents: 2400, country: "NG", city: "Lagos", timezone: "Africa/Lagos", payoutMethod: "PYUSD", walletAddress: adaezeWallet });
+  const ali = await w({ name: "Ali Raza", role: "CONTRACTOR", work: "Web fixes", rateNote: "$20 per bug fix", usualCents: 2000, country: "PK", city: "Lahore", timezone: "Asia/Karachi", payoutMethod: "PYUSD", walletAddress: aliWallet });
+  const rohan = await w({ name: "Rohan Mehta", role: "CONTRACTOR", work: "QA testing", rateNote: "$18 per hour", usualCents: 36000, country: "IN", city: "Pune", timezone: "Asia/Kolkata", payoutMethod: "PAYPAL", paypalEmail: sandboxEmail });
+  const maria = await w({ name: "Maria Santos", role: "CONTRACTOR", work: "Design production", rateNote: "$25 per hour", usualCents: 80000, country: "PH", city: "Manila", timezone: "Asia/Manila", payoutMethod: "PAYPAL", paypalEmail: sandboxEmail });
+  const jordan = await w({ name: "Jordan Lee", role: "CONTRACTOR", work: "Brand strategy", rateNote: "$1,500 monthly retainer", usualCents: 150000, country: "US", city: "Austin", timezone: "America/Chicago", payoutMethod: "PAYPAL", paypalEmail: sandboxEmail });
   const sam = await w({ name: "Sam Carter", role: "STAFF", work: "Account manager", rateNote: "Staff: expenses paid back", country: "US", city: "Austin", timezone: "America/Chicago", payoutMethod: "PAYPAL", paypalEmail: sandboxEmail });
 
   // Last month's pay run, already paid. Gives the AI a history to compare against.
