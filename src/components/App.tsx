@@ -5,18 +5,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Snapshot } from "@/lib/state";
 import { Clocks } from "./Clocks";
 import { History } from "./History";
-import { Paydays } from "./Paydays";
 import { People } from "./People";
 import { Rules } from "./Rules";
 import { ThisMonth } from "./ThisMonth";
 import { Btn } from "./ui";
 import { reviewFingerprint } from "@/lib/fingerprint";
 
-type Tab = "month" | "paydays" | "people" | "history" | "rules";
+type Tab = "month" | "people" | "history" | "rules";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "month", label: "This month" },
-  { id: "paydays", label: "Paydays" },
   { id: "people", label: "People" },
   { id: "history", label: "History" },
   { id: "rules", label: "Expense rules" },
@@ -49,7 +47,8 @@ export function App() {
   const post = useCallback((url: string, body?: object) => call(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined }), [call]);
 
   useEffect(() => {
-    const fromHash = window.location.hash.slice(1) as Tab;
+    const raw = window.location.hash.slice(1);
+    const fromHash = (raw === "paydays" ? "people" : raw) as Tab;
     if (TABS.some((t) => t.id === fromHash)) setTimeout(() => setTab(fromHash), 0);
   }, []);
 
@@ -163,12 +162,13 @@ export function App() {
           openPeople={() => setTab("people")}
         />
       )}
-      {tab === "paydays" && (
-        <Paydays
+      {tab === "people" && (
+        <People
           s={s}
           busy={busy}
+          change={async (body) => !!(await post("/api/people", body))}
           openMonth={() => setTab("month")}
-          act={async (body) => {
+          paydays={async (body) => {
             const running = (body as { action?: string }).action === "PRETEND_AND_RUN";
             if (running) setBusy("payday");
             const out = await post("/api/paydays", body);
@@ -177,7 +177,6 @@ export function App() {
           }}
         />
       )}
-      {tab === "people" && <People s={s} change={async (body) => !!(await post("/api/people", body))} />}
       {tab === "history" && (
         <History
           s={s}

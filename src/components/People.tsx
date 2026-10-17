@@ -3,9 +3,24 @@
 import { useState } from "react";
 import type { Snapshot } from "@/lib/state";
 import { AddPerson } from "./AddPerson";
+import { PaydayCalendarSection, PaydaySettings, PersonPayday } from "./Paydays";
 import { Btn, Rail, SectionTitle, dollars, shortAddress, type Worker } from "./ui";
 
-export function People({ s, change }: { s: Snapshot; change: (body: object) => Promise<boolean> }) {
+type PaydayAct = (body: object) => Promise<(Snapshot & { message?: string }) | null>;
+
+export function People({
+  s,
+  change,
+  paydays,
+  busy,
+  openMonth,
+}: {
+  s: Snapshot;
+  change: (body: object) => Promise<boolean>;
+  paydays: PaydayAct;
+  busy: string | null;
+  openMonth: () => void;
+}) {
   const [copied, setCopied] = useState<string | null>(null);
   const [adding, setAdding] = useState(s.workers.length === 0);
   return (
@@ -71,6 +86,7 @@ export function People({ s, change }: { s: Snapshot; change: (body: object) => P
                   </p>
                 </div>
               )}
+              <PersonPayday s={s} workerId={w.id} act={paydays} />
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Btn
                   variant="ghost"
@@ -94,6 +110,12 @@ export function People({ s, change }: { s: Snapshot; change: (body: object) => P
           );
         })}
       </div>
+      {s.workers.length > 0 && (
+        <>
+          <PaydaySettings s={s} act={paydays} busy={busy} openMonth={openMonth} />
+          <PaydayCalendarSection s={s} act={paydays} />
+        </>
+      )}
     </div>
   );
 }
