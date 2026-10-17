@@ -3,6 +3,7 @@ import { explainPayday } from "./ai";
 import { allowedMethods } from "./countries";
 import { dollars } from "./money";
 import { payEnvelopes } from "./payrun";
+import { checkAndFollowUp } from "./followup";
 import { isValidAddress, treasuryBalance } from "./solana";
 import { log } from "./workspace";
 
@@ -107,6 +108,7 @@ export async function runPaydays(workspaceId: string, today: Date) {
   const payable = checked.filter((c) => !c.problems.length);
   if (payable.length) {
     await payEnvelopes(workspaceId, run.id, run.label);
+    await checkAndFollowUp(workspaceId, run.id);
     await prisma.schedule.updateMany({ where: { id: { in: payable.map((c) => c.s.id) } }, data: { lastPaidPeriod: now } });
   } else {
     await prisma.payRun.update({ where: { id: run.id }, data: { status: "SENT", sentAt: new Date() } });

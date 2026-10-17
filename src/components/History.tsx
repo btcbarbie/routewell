@@ -5,7 +5,8 @@ import { AgGridReact } from "ag-grid-react";
 import type { ColDef } from "ag-grid-community";
 import type { Snapshot } from "@/lib/state";
 import { paperTheme } from "./ReviewGrid";
-import { AiNote, Btn, SectionTitle, Stamp, dollars } from "./ui";
+import { RunOutcome } from "./RunOutcome";
+import { Btn, SectionTitle, Stamp, dollars } from "./ui";
 
 type Row = { date: string; run: string; person: string; what: string; amount: number; via: string; status: string; detail: string; link: string | null };
 
@@ -76,27 +77,7 @@ export function History({ s, refresh, busy }: { s: Snapshot; refresh: (runId: st
                     {r.paypalBatchId && <> · PayPal batch <span className="font-mono">{r.paypalBatchId}</span></>}
                   </span>
                 </div>
-                <ul className="mt-2 divide-y divide-paper-line">
-                  {r.envelopes.map((e) => (
-                    <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
-                      <span className="min-w-0">
-                        <b className="font-semibold">{s.workers.find((w) => w.id === e.workerId)?.name ?? e.nameAsWritten}</b>{" "}
-                        <span className="text-ink-soft">· {e.description}</span>
-                        {e.status !== "PAID" && e.statusDetail && <span className="block text-[13px] text-ink-soft">{e.statusDetail}</span>}
-                      </span>
-                      <span className="flex items-center gap-3">
-                        {e.txUrl && (
-                          <a href={e.txUrl} target="_blank" rel="noreferrer" className="text-[13px] underline underline-offset-2">
-                            On chain
-                          </a>
-                        )}
-                        <span className="font-mono">{dollars(e.amountCents)}</span>
-                        <Stamp kind={e.status} />
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                {r.resultSummary && <AiNote text={r.resultSummary} label="AFTER PAYDAY" />}
+                <RunOutcome s={s} run={r} />
                 {pending && r.paypalBatchId && (
                   <Btn className="mt-3" onClick={() => refresh(r.id)} disabled={busy === "refreshing"}>
                     {busy === "refreshing" ? "Asking PayPal…" : "Ask PayPal again"}

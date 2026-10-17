@@ -2,6 +2,7 @@ import { handle } from "@/lib/http";
 import { checkLimit, clientIp } from "@/lib/limits";
 import { prisma } from "@/lib/prisma";
 import { payEnvelopes } from "@/lib/payrun";
+import { checkAndFollowUp } from "@/lib/followup";
 import { forgetTreasury, snapshot } from "@/lib/state";
 import { workspaceId, log } from "@/lib/workspace";
 
@@ -15,6 +16,7 @@ export async function POST(req: Request) {
     if (open.length) throw new Error(`${open.length} envelope${open.length === 1 ? " needs" : "s need"} a look first.`);
     await log(ws, "YOU", `Sealed and sent ${run.label}.`);
     await payEnvelopes(ws, run.id, run.label);
+    await checkAndFollowUp(ws, run.id);
     forgetTreasury();
     return snapshot(ws);
   });

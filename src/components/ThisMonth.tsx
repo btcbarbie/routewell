@@ -4,9 +4,10 @@ import { useState } from "react";
 import type { Snapshot } from "@/lib/state";
 import { AskBar } from "./AskBar";
 import { EnvelopeCard } from "./EnvelopeCard";
+import { RunOutcome } from "./RunOutcome";
 import { StartRun } from "./StartRun";
 import { ReviewGrid } from "./ReviewGrid";
-import { AiNote, Btn, SectionTitle, dollars } from "./ui";
+import { Btn, SectionTitle, dollars } from "./ui";
 
 
 export function ThisMonth({
@@ -78,7 +79,7 @@ export function ThisMonth({
         </div>
       </section>
 
-      {justSent && !envelopes.length && (
+      {justSent && (
         <section className="mb-7 rounded-[4px] border-2 border-ink bg-paper-hi p-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="font-display text-xl font-bold">Sent: {lastRun.label}</h2>
@@ -86,15 +87,7 @@ export function ThisMonth({
               See every payment
             </Btn>
           </div>
-          <p className="mt-1 text-sm text-ink-soft">
-            {lastRun.envelopes.filter((e) => e.status === "PAID").length} paid · {lastRun.envelopes.filter((e) => e.status === "PENDING").length} still with PayPal ·{" "}
-            {lastRun.envelopes.filter((e) => ["UNCLAIMED", "FAILED", "RETURNED"].includes(e.status)).length} need attention
-          </p>
-          {lastRun.resultSummary ? (
-            <AiNote text={lastRun.resultSummary} label="AFTER PAYDAY" />
-          ) : (
-            <p className="mt-2 font-hand text-[19px]">Waiting for PayPal to finish. This page checks again by itself.</p>
-          )}
+          <RunOutcome s={s} run={lastRun} />
         </section>
       )}
 

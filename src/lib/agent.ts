@@ -333,7 +333,7 @@ function tools(ctx: Ctx) {
             payRunId: next.id, workerId: e.worker.id, nameAsWritten: e.worker.name, kind: e.kind, amountCents: e.amountCents,
             description: e.description, calculation: e.calculation, sourceQuote: `Carried over from ${e.payRun.label}`, method,
             stamp: "LOOK_AGAIN", aiNote: reason,
-            issues: JSON.stringify([`Carried over from ${e.payRun.label}: ${e.statusDetail ?? e.status.toLowerCase()}.`, ...problems]),
+            issues: JSON.stringify([`Carried over from ${e.payRun.label}: ${(e.statusDetail ?? e.status.toLowerCase()).replace(/\.$/, "")}.`, ...problems]),
           },
         });
         const what = `Carried to the next pay run${method !== e.method ? `, switched to ${method === "PYUSD" ? "PYUSD" : "PayPal"}` : ""}. Waiting for your OK.`;

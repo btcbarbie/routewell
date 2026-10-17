@@ -60,7 +60,8 @@ export function App() {
   }, []);
 
   // While PayPal is still processing the latest batch, ask again every few seconds (for up to two minutes).
-  const pendingRun = s?.runs.find((r) => r.paypalBatchId && r.envelopes.some((e) => e.status === "PENDING"));
+  // Keep checking while PayPal is still working, or while the agent's follow-up hasn't finished.
+  const pendingRun = s?.runs.find((r) => r.envelopes.some((e) => e.status === "PENDING") || (r.sentAt && !r.resultSummary && r.followUpState !== "DONE"));
   useEffect(() => {
     if (!pendingRun) {
       polls.current = 0;

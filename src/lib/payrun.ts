@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { Envelope, Worker } from "@prisma/client";
 import { prisma } from "./prisma";
-import { readIntake, readReceipt, reviewEnvelopes, summarizeResults } from "./ai";
+import { readIntake, readReceipt, reviewEnvelopes } from "./ai";
 import { allowedMethods } from "./countries";
 import { dollars, monthLabel, toCents } from "./money";
 import { getBatch, sendBatch, envelopeStatusFor, PAYPAL_ERRORS } from "./paypal";
@@ -16,11 +16,19 @@ export function isoDay(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
+// One draft at a time per company, even when several steps (like the agent's parallel tool calls) ask at once.
+const draftLocks = new Map<string, Promise<unknown>>();
+
 /** This month's draft pay run, created on first use. */
 export async function draftRun(workspaceId: string) {
-  const existing = await prisma.payRun.findFirst({ where: { workspaceId, status: "DRAFT", kind: "MANUAL" }, orderBy: { createdAt: "desc" } });
-  if (existing) return existing;
-  return prisma.payRun.create({ data: { workspaceId, label: monthLabel(new Date()), kind: "MANUAL" } });
+  const previous = draftLocks.get(workspaceId) ?? Promise.resolve();
+  const next = previous.then(async () => {
+    const existing = await prisma.payRun.findFirst({ where: { workspaceId, status: "DRAFT", kind: "MANUAL" }, orderBy: { createdAt: "desc" } });
+    if (existing) return existing;
+    return prisma.payRun.create({ data: { workspaceId, label: monthLabel(new Date()), kind: "MANUAL" } });
+  });
+  draftLocks.set(workspaceId, next.catch(() => undefined));
+  return next;
 }
 
 /** Problems a person's payout details would cause, checked by code rather than the AI. */
@@ -350,10 +358,9 @@ export async function payEnvelopes(workspaceId: string, runId: string, label: st
     }
   }
 
-  await refreshRun(workspaceId, runId);
 }
 
-/** Ask PayPal how the batch is doing and update each envelope. Writes the AI summary once everything has settled. */
+/** Ask PayPal how the batch is doing and update each envelope. Returns true once nothing is still processing. */
 export async function refreshRun(workspaceId: string, runId: string) {
   const run = await prisma.payRun.findUniqueOrThrow({ where: { id: runId } });
   if (run.paypalBatchId) {
@@ -378,20 +385,6 @@ export async function refreshRun(workspaceId: string, runId: string) {
     }
   }
 
-  const envelopes = await prisma.envelope.findMany({ where: { payRunId: runId }, include: { worker: true } });
-  const settled = envelopes.every((e) => e.status !== "PENDING");
-  if (settled && !run.resultSummary) {
-    const results = envelopes
-      .filter((e) => e.status !== "DRAFT")
-      .map((e) => ({ person: e.worker?.name ?? e.nameAsWritten, amount: dollars(e.amountCents), via: e.method, status: e.status, detail: e.statusDetail }));
-    let summary: string;
-    try {
-      summary = await summarizeResults({ results, context: `Pay run: ${run.label}.` });
-    } catch {
-      const paid = results.filter((r) => r.status === "PAID").length;
-      summary = `${paid} of ${results.length} paid.`;
-    }
-    await prisma.payRun.update({ where: { id: runId }, data: { resultSummary: summary } });
-    await log(workspaceId, "AI", summary);
-  }
+  const envelopes = await prisma.envelope.findMany({ where: { payRunId: runId } });
+  return envelopes.every((e) => e.status !== "PENDING");
 }

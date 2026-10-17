@@ -100,6 +100,7 @@ export async function snapshot(workspaceId: string) {
         sentAt: r.sentAt?.toISOString() ?? null,
         payday: (r.kind === "SCHEDULED" ? r.createdAt : r.sentAt ?? r.createdAt).toISOString(),
         resultSummary: r.resultSummary,
+        followUpState: r.followUpState,
         paypalBatchId: r.paypalBatchId,
         paypalBatchStatus: r.paypalBatchStatus,
         envelopes: r.envelopes.map(envelopeOut),
