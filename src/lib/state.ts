@@ -29,6 +29,7 @@ export async function snapshot(workspaceId: string) {
       rules: { orderBy: { createdAt: "asc" } },
       schedules: { orderBy: { createdAt: "asc" } },
       activity: { orderBy: { at: "desc" }, take: 30 },
+      agentRuns: { orderBy: { createdAt: "desc" }, take: 8, include: { steps: { orderBy: { at: "asc" } } } },
       payRuns: { orderBy: { createdAt: "desc" }, include: { envelopes: { orderBy: { createdAt: "asc" }, include: { receipt: { select: { id: true, vendor: true, receiptDate: true } } } } } },
     },
   });
@@ -54,6 +55,8 @@ export async function snapshot(workspaceId: string) {
     txUrl: e.txSignature ? explorerUrl(e.txSignature) : null,
     receipt: e.receipt ? { id: e.receipt.id, vendor: e.receipt.vendor, date: e.receipt.receiptDate } : null,
     scheduleId: e.scheduleId,
+    followUp: e.followUp,
+    followUpKind: e.followUpKind,
   });
 
   const draft = ws.payRuns.find((r) => r.status === "DRAFT" && r.kind === "MANUAL") ?? null;
@@ -113,6 +116,16 @@ export async function snapshot(workspaceId: string) {
     })),
     rules: ws.rules.map((r) => ({ id: r.id, text: r.text, example: r.example })),
     activity: ws.activity.map((a) => ({ id: a.id, at: a.at.toISOString(), actor: a.actor, text: a.text })),
+    agentRuns: ws.agentRuns.map((r) => ({
+      id: r.id,
+      trigger: r.trigger,
+      goal: r.goal,
+      status: r.status,
+      reply: r.reply,
+      payRunId: r.payRunId,
+      at: r.createdAt.toISOString(),
+      steps: r.steps.map((st) => ({ id: st.id, kind: st.kind, text: st.text })),
+    })),
     countries: COUNTRIES,
   };
 }

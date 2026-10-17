@@ -111,6 +111,14 @@ export function EnvelopeCard({
         </p>
       )}
 
+      {editable && e.status === "HELD" && (
+        <div className="col-span-2 mt-2.5">
+          <Btn variant="secondary" className="!py-1.5" onClick={() => act(e.id, { action: "UNHOLD" })}>
+            Put it back in
+          </Btn>
+        </div>
+      )}
+
       {(e.receipt || (editable && e.status === "DRAFT")) && (
         <div className="col-span-2 mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1">
           {e.receipt && (
@@ -135,6 +143,9 @@ export function EnvelopeCard({
                   Change amount
                 </Btn>
               )}
+              <Btn variant="ghost" onClick={() => act(e.id, { action: "HOLD" })}>
+                Hold back
+              </Btn>
               <Btn variant="ghost" onClick={() => act(e.id, { action: "REMOVE" })}>
                 Take it out
               </Btn>

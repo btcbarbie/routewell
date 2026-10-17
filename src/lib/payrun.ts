@@ -24,7 +24,7 @@ export async function draftRun(workspaceId: string) {
 }
 
 /** Problems a person's payout details would cause, checked by code rather than the AI. */
-function payoutDetailIssues(worker: Worker, method: string): string[] {
+export function payoutDetailIssues(worker: Worker, method: string): string[] {
   const issues: string[] = [];
   if (!allowedMethods(worker.country).includes(method as "PAYPAL" | "PYUSD")) {
     issues.push(method === "PAYPAL" ? "PayPal can't pay people in their country." : "PYUSD isn't an option in their country.");

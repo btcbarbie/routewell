@@ -27,6 +27,7 @@ model Workspace {
   receipts  Receipt[]
   schedules Schedule[]
   activity  Activity[]
+  agentRuns AgentRun[]
 }
 
 model Worker {
@@ -66,6 +67,8 @@ model PayRun {
   resultSummary    String?
   paypalBatchId    String?
   paypalBatchStatus String?
+  // The agent's follow-up after PayPal settles runs once per pay run: null, "RUNNING" or "DONE".
+  followUpState    String?
   createdAt        DateTime @default(now())
   sentAt           DateTime?
 
@@ -96,6 +99,9 @@ model Envelope {
   receiptId    String?  @unique
   receipt      Receipt? @relation(fields: [receiptId], references: [id])
   scheduleId   String?
+  // What the agent did about this envelope after paying: carried it over, or wrote a reminder.
+  followUp     String?
+  followUpKind String?  // "CARRIED" | "REMINDER"
   createdAt    DateTime @default(now())
 }
 
@@ -151,4 +157,28 @@ model Activity {
   at          DateTime @default(now())
   actor       String   // "YOU" | "AI" | "PAYPAL" | "SOLANA" | "WORKER"
   text        String
+}
+
+// One piece of work by the Routewell agent, and every step it took. Shown on screen as the agent's trail.
+model AgentRun {
+  id          String   @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  trigger     String   // "ASK" | "RESULTS" | "PAYDAY"
+  goal        String
+  status      String   @default("RUNNING") // "RUNNING" | "DONE" | "FAILED"
+  reply       String?
+  payRunId    String?
+  createdAt   DateTime @default(now())
+  finishedAt  DateTime?
+  steps       AgentStep[]
+}
+
+model AgentStep {
+  id         String   @id @default(cuid())
+  agentRunId String
+  agentRun   AgentRun @relation(fields: [agentRunId], references: [id], onDelete: Cascade)
+  at         DateTime @default(now())
+  kind       String   // "LOOK" | "ACT" | "BLOCKED"
+  text       String
 }

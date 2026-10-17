@@ -10,7 +10,9 @@ type Body =
   | { action: "UNDO_DECISION" }
   | { action: "REMOVE" }
   | { action: "SET_AMOUNT"; amountUsd: number }
-  | { action: "SET_METHOD"; method: "PAYPAL" | "PYUSD" };
+  | { action: "SET_METHOD"; method: "PAYPAL" | "PYUSD" }
+  | { action: "HOLD" }
+  | { action: "UNHOLD" };
 
 export async function POST(req: Request, ctx: RouteContext<"/api/envelopes/[id]">) {
   return handle(async () => {
@@ -19,7 +21,9 @@ export async function POST(req: Request, ctx: RouteContext<"/api/envelopes/[id]"
     const body = (await req.json()) as Body;
     const env = await prisma.envelope.findFirst({ where: { id, payRun: { workspaceId: ws } }, include: { payRun: true, worker: true } });
     if (!env) throw new Error("Envelope not found.");
-    if (env.payRun.status !== "DRAFT" || env.status !== "DRAFT") throw new Error("This envelope has already been sent.");
+    if (env.payRun.status !== "DRAFT") throw new Error("This envelope has already been sent.");
+    if (env.status === "HELD" && !["UNHOLD", "REMOVE"].includes(body.action)) throw new Error("Put it back in first.");
+    if (env.status !== "DRAFT" && env.status !== "HELD") throw new Error("This envelope has already been sent.");
     const who = env.worker?.name ?? env.nameAsWritten;
 
     switch (body.action) {
@@ -51,6 +55,14 @@ export async function POST(req: Request, ctx: RouteContext<"/api/envelopes/[id]"
         await prisma.envelope.update({ where: { id }, data: { method: body.method } });
         break;
       }
+      case "HOLD":
+        await prisma.envelope.update({ where: { id }, data: { status: "HELD", statusDetail: "Held back by you." } });
+        await log(ws, "YOU", `Held back ${who}'s envelope (${dollars(env.amountCents)}).`);
+        break;
+      case "UNHOLD":
+        await prisma.envelope.update({ where: { id }, data: { status: "DRAFT", statusDetail: null } });
+        await log(ws, "YOU", `Put ${who}'s envelope back in.`);
+        break;
       default:
         throw new Error("Unknown action.");
     }

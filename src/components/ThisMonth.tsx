@@ -2,14 +2,12 @@
 
 import { useState } from "react";
 import type { Snapshot } from "@/lib/state";
-import type { AskResult } from "@/lib/ai";
 import { AskBar } from "./AskBar";
 import { EnvelopeCard } from "./EnvelopeCard";
 import { StartRun } from "./StartRun";
 import { ReviewGrid } from "./ReviewGrid";
 import { AiNote, Btn, SectionTitle, dollars } from "./ui";
 
-type Proposal = AskResult & { instruction: string };
 
 export function ThisMonth({
   s,
@@ -18,8 +16,7 @@ export function ThisMonth({
   run,
   act,
   send,
-  propose,
-  apply,
+  ask,
   openHistory,
   openPeople,
 }: {
@@ -29,12 +26,14 @@ export function ThisMonth({
   run: (body: object) => Promise<boolean>;
   act: (id: string, body: object) => Promise<void>;
   send: () => Promise<void>;
-  propose: (text: string) => Promise<Proposal | null>;
-  apply: (p: Proposal) => Promise<boolean>;
+  ask: (text: string) => Promise<string | null>;
   openHistory: () => void;
   openPeople: () => void;
 }) {
   const [view, setView] = useState<"envelopes" | "table">("envelopes");
+  const shown = (s.draft?.envelopes.filter((e) => e.status === "DRAFT" || e.status === "HELD") ?? []).sort(
+    (a, b) => Number(a.status === "HELD") - Number(b.status === "HELD"),
+  );
   const envelopes = (s.draft?.envelopes.filter((e) => e.status === "DRAFT") ?? []).sort(
     (a, b) => Number(b.stamp === "LOOK_AGAIN" && !b.ownerDecision) - Number(a.stamp === "LOOK_AGAIN" && !a.ownerDecision),
   );
@@ -111,7 +110,7 @@ export function ThisMonth({
 
       <StartRun s={s} busy={busy} read={read} run={run} />
 
-      {envelopes.length > 0 && (
+      {shown.length > 0 && (
         <>
           <SectionTitle
             hint={
@@ -134,7 +133,7 @@ export function ThisMonth({
 
           {view === "envelopes" ? (
             <div className="grid gap-3.5 md:grid-cols-2">
-              {envelopes.map((e) => (
+              {[...envelopes, ...shown.filter((e) => e.status === "HELD")].map((e) => (
                 <EnvelopeCard key={e.id} e={e} worker={workerById(e.workerId)} fx={s.fx} editable act={act} />
               ))}
             </div>
@@ -181,7 +180,7 @@ export function ThisMonth({
         </>
       )}
 
-      <AskBar propose={propose} apply={apply} />
+      <AskBar runs={s.agentRuns} ask={ask} />
     </>
   );
 }

@@ -4,7 +4,7 @@ import * as z from "zod/v4";
 
 // Claude Opus 5.5 with structured outputs: every answer comes back in a fixed shape the app checks.
 // Server-side fallbacks are on, so a declined request is retried on Anthropic's recommended fallback model.
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, baseURL: "https://api.anthropic.com" });
+export const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, baseURL: "https://api.anthropic.com" });
 export const MODEL = "claude-opus-5-5";
 
 export class AiError extends Error {}
@@ -39,7 +39,7 @@ async function structured<T extends z.ZodType>(
   return res.parsed_output as z.infer<T>;
 }
 
-const VOICE = `Write notes like a careful bookkeeper's pencil notes in the margin: plain words, no jargon, no exclamation marks.
+export const VOICE = `Write notes like a careful bookkeeper's pencil notes in the margin: plain words, no jargon, no exclamation marks.
 Keep every note under 25 words and every issue under 20 words. Say what you checked and what you found.
 Never invent facts, rates, dates or amounts that aren't in the input. If something is unclear, flag it rather than guessing.`;
 
@@ -153,41 +153,6 @@ ${input.rules.map((r) => `- ${r}`).join("\n")}`;
     ],
     "medium",
   );
-}
-
-// ---------- Ask bar: plain-English instructions -> proposed actions ----------
-
-export const AskResult = z.object({
-  reply: z.string().describe("One or two short sentences to the owner saying what you'll do, or why you can't."),
-  actions: z.array(
-    z.object({
-      type: z.enum(["SET_AMOUNT", "ADD_PAYMENT", "REMOVE_ENVELOPE", "SET_METHOD", "CREATE_SCHEDULE", "PAUSE_SCHEDULE", "RESUME_SCHEDULE"]),
-      envelopeId: z.string().nullable(),
-      workerId: z.string().nullable(),
-      scheduleId: z.string().nullable(),
-      amountUsd: z.number().nullable(),
-      dayOfMonth: z.number().nullable(),
-      method: z.enum(["PAYPAL", "PYUSD"]).nullable(),
-      description: z.string().nullable().describe("For ADD_PAYMENT and CREATE_SCHEDULE: what it's for, e.g. 'Bonus for the launch'."),
-      label: z.string().describe("One short line describing this action for the owner to approve."),
-    }),
-  ),
-});
-export type AskResult = z.infer<typeof AskResult>;
-
-export async function interpretAsk(input: { today: string; instruction: string; context: unknown }): Promise<AskResult> {
-  const system = `You help a small business owner adjust this month's payments and their scheduled paydays.
-Turn their instruction into actions from the allowed list. The owner approves every action before it happens.
-- Use ids from the context exactly. Never invent an id.
-- ADD_PAYMENT needs workerId, amountUsd and description. CREATE_SCHEDULE needs workerId, amountUsd, dayOfMonth (1-28) and description.
-- If the instruction is unclear or asks for something not in the list, return no actions and say what you need.
-${VOICE}`;
-  const text = `Today is ${input.today}.
-Context:
-${JSON.stringify(input.context, null, 2)}
-
-Owner's instruction: ${input.instruction}`;
-  return structured(AskResult, system, [{ type: "text", text }], "low");
 }
 
 // ---------- Summaries after paying ----------
