@@ -13,7 +13,9 @@ type Body =
   | { action: "SET_PAUSED"; paused: boolean }
   | { action: "SET_MODE"; mode: "ASK" | "AUTO" }
   | { action: "TOGGLE_SCHEDULE"; scheduleId: string; active: boolean }
-  | { action: "MOVE_SCHEDULE"; scheduleId: string; dayOfMonth: number };
+  | { action: "MOVE_SCHEDULE"; scheduleId: string; dayOfMonth: number }
+  | { action: "CREATE_SCHEDULE"; workerId: string; amountUsd: number; dayOfMonth: number; note: string }
+  | { action: "REMOVE_SCHEDULE"; scheduleId: string };
 
 export async function POST(req: Request) {
   return handle(async () => {
@@ -51,6 +53,27 @@ export async function POST(req: Request) {
         await prisma.workspace.update({ where: { id: ws }, data: { autopilotPaused: !!body.paused } });
         await log(ws, "YOU", body.paused ? "Paused all scheduled paydays." : "Turned scheduled paydays back on.");
         break;
+      case "CREATE_SCHEDULE": {
+        const w = await prisma.worker.findFirst({ where: { id: body.workerId, workspaceId: ws } });
+        if (!w) throw new Error("Pick who to pay.");
+        const cents = toCents(Number(body.amountUsd));
+        if (!Number.isFinite(cents) || cents <= 0 || cents > 10_000_00) throw new Error("Enter an amount between $0.01 and $10,000.");
+        const day = Number(body.dayOfMonth);
+        if (!Number.isInteger(day) || day < 1 || day > 28) throw new Error("Pick a day from 1 to 28.");
+        const note = String(body.note ?? "").trim().slice(0, 80) || "Monthly payment";
+        await prisma.schedule.create({
+          data: { workspaceId: ws, workerId: w.id, amountCents: cents, dayOfMonth: day, note, createdFrom: `${note}: $${(cents / 100).toFixed(2)} for ${w.name} on day ${day} of every month` },
+        });
+        await log(ws, "YOU", `Set up a payday: $${(cents / 100).toFixed(2)} for ${w.name} on day ${day} of every month.`);
+        break;
+      }
+      case "REMOVE_SCHEDULE": {
+        const s = await prisma.schedule.findFirst({ where: { id: body.scheduleId, workspaceId: ws }, include: { worker: true } });
+        if (!s) throw new Error("Scheduled payday not found.");
+        await prisma.schedule.delete({ where: { id: s.id } });
+        await log(ws, "YOU", `Removed ${s.worker.name}'s payday.`);
+        break;
+      }
       case "TOGGLE_SCHEDULE": {
         const s = await prisma.schedule.findFirst({ where: { id: body.scheduleId, workspaceId: ws }, include: { worker: true } });
         if (!s) throw new Error("Scheduled payday not found.");
