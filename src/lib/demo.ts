@@ -8,12 +8,41 @@ import { monthLabel } from "./money";
 // A made-up studio with people in five countries. PayPal workers all receive at the
 // sandbox personal account from .env, because sandbox payouts must go to sandbox accounts.
 
-export const DEMO_RULES = [
-  "Meals: up to $50 per person. No alcohol.",
-  "Taxis and rides: up to $80 per trip.",
-  "Receipts must be from the last 60 days.",
-  "Equipment over $200 needs approval before buying.",
+// Starter rules for paying back staff who spend their own money on work. The AI checks every receipt against them.
+export const DEMO_RULES: { text: string; example: string }[] = [
+  {
+    text: "Meals with clients: we pay back up to $50 per person. Alcohol isn't paid back.",
+    example: "Lunch for 2 came to $81.28, including $24 of wine. We pay back $50.80: the food, plus its share of the tax and tip.",
+  },
+  {
+    text: "Taxis and rides for work: we pay back up to $80 per trip.",
+    example: "A $48.20 ride to a client meeting is paid back in full. A $95 ride is paid back $80.",
+  },
+  {
+    text: "Receipts older than 60 days aren't paid back.",
+    example: "A receipt from August 1 sent in at the end of October is held for you to decide.",
+  },
+  {
+    text: "Equipment over $200 needs your OK before it's bought.",
+    example: "A $350 monitor bought without asking first is held for you to decide.",
+  },
 ];
+
+// Older demo copies used shorter wording; swap it for the plain version.
+const OLD_RULE_TEXT: Record<string, number> = {
+  "Meals: up to $50 per person. No alcohol.": 0,
+  "Taxis and rides: up to $80 per trip.": 1,
+  "Receipts must be from the last 60 days.": 2,
+  "Equipment over $200 needs approval before buying.": 3,
+};
+
+export async function upgradeOldRules(workspaceId: string) {
+  const rules = await prisma.spendingRule.findMany({ where: { workspaceId, text: { in: Object.keys(OLD_RULE_TEXT) } } });
+  for (const r of rules) {
+    const fresh = DEMO_RULES[OLD_RULE_TEXT[r.text]];
+    await prisma.spendingRule.update({ where: { id: r.id }, data: { text: fresh.text, example: fresh.example } });
+  }
+}
 
 export async function createDemoWorkspace() {
   const sandboxEmail = process.env.PAYPAL_TEST_RECEIVER_EMAIL ?? "sandbox-personal@example.com";
@@ -27,7 +56,7 @@ export async function createDemoWorkspace() {
   const ws = await prisma.workspace.create({
     data: {
       companyName: "Brightside Studio",
-      rules: { create: DEMO_RULES.map((text) => ({ text })) },
+      rules: { create: DEMO_RULES },
     },
   });
 

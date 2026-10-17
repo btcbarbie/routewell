@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
-import { backfillDemoUsual, createDemoWorkspace, DEMO_RULES } from "./demo";
+import { backfillDemoUsual, createDemoWorkspace, DEMO_RULES, upgradeOldRules } from "./demo";
 
 // Cookies: which workspace you're looking at now, your copy of the demo studio, and the company you set up yourself.
 const CURRENT = "rw_ws";
@@ -23,10 +23,20 @@ export async function workspaceId(): Promise<string> {
   const jar = await cookies();
   const current = await exists(jar.get(CURRENT)?.value);
   if (current) {
-    if (current.isDemo) await backfillDemoUsual(current.id);
+    await tidyOldCopy(current.id, current.isDemo);
     return current.id;
   }
   return openDemo();
+}
+
+/** Bring older copies up to date (usual amounts, plain-worded rules). Never blocks the page if it fails. */
+async function tidyOldCopy(id: string, isDemo: boolean) {
+  try {
+    if (isDemo) await backfillDemoUsual(id);
+    await upgradeOldRules(id);
+  } catch (err) {
+    console.error("Couldn't update an older copy:", err);
+  }
 }
 
 /** Your copy of the demo studio (made on first visit). */
@@ -34,7 +44,7 @@ export async function openDemo(): Promise<string> {
   const jar = await cookies();
   const demo = await exists(jar.get(DEMO)?.value);
   const id = demo?.id ?? (await createDemoWorkspace()).id;
-  if (demo) await backfillDemoUsual(id);
+  if (demo) await tidyOldCopy(id, true);
   await setCookie(DEMO, id);
   await setCookie(CURRENT, id);
   return id;
@@ -51,7 +61,7 @@ export async function startFresh(): Promise<string> {
 /** Set up your own company: empty, with starter spending rules you can change. */
 export async function startOwn(companyName: string): Promise<string> {
   const ws = await prisma.workspace.create({
-    data: { companyName, isDemo: false, rules: { create: DEMO_RULES.map((text) => ({ text })) } },
+    data: { companyName, isDemo: false, rules: { create: DEMO_RULES } },
   });
   await setCookie(MINE, ws.id);
   await setCookie(CURRENT, ws.id);

@@ -124,6 +124,8 @@ model SpendingRule {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   text        String
+  // A worked example in plain words, shown under the rule. Optional.
+  example     String?
   createdAt   DateTime @default(now())
 }
 

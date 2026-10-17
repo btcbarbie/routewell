@@ -111,7 +111,7 @@ export async function snapshot(workspaceId: string) {
       active: s.active,
       lastPaidPeriod: s.lastPaidPeriod,
     })),
-    rules: ws.rules.map((r) => ({ id: r.id, text: r.text })),
+    rules: ws.rules.map((r) => ({ id: r.id, text: r.text, example: r.example })),
     activity: ws.activity.map((a) => ({ id: a.id, at: a.at.toISOString(), actor: a.actor, text: a.text })),
     countries: COUNTRIES,
   };

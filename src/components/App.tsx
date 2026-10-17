@@ -20,7 +20,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "paydays", label: "Paydays" },
   { id: "people", label: "People" },
   { id: "history", label: "History" },
-  { id: "rules", label: "Rules" },
+  { id: "rules", label: "Expense rules" },
 ];
 
 export function App() {

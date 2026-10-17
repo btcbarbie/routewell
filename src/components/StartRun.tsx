@@ -92,6 +92,7 @@ export function StartRun({
           </div>
         )}
 
+        {way === "upload" && <p className="mb-3 text-[13px] text-ink-soft">Receipts are checked against your expense rules ({s.rules.length} set).</p>}
         {(way === "tell" || way === "upload") && <Intake key={way} mode={way} workers={s.workers} isDemo={s.isDemo} onSubmit={read} busy={reading} />}
 
         {way === "one" && <AddOne s={s} busy={busy === "one"} run={run} />}
