@@ -11,6 +11,7 @@ type Body =
   | { action: "BACK_TO_TODAY" }
   | { action: "SET_BUDGET"; amountUsd: number }
   | { action: "SET_PAUSED"; paused: boolean }
+  | { action: "SET_MODE"; mode: "ASK" | "AUTO" }
   | { action: "TOGGLE_SCHEDULE"; scheduleId: string; active: boolean }
   | { action: "MOVE_SCHEDULE"; scheduleId: string; dayOfMonth: number };
 
@@ -41,6 +42,11 @@ export async function POST(req: Request) {
         await log(ws, "YOU", `Set the monthly payday budget to $${(cents / 100).toFixed(2)}.`);
         break;
       }
+      case "SET_MODE":
+        if (body.mode !== "ASK" && body.mode !== "AUTO") throw new Error("Pick how scheduled paydays work.");
+        await prisma.workspace.update({ where: { id: ws }, data: { paydayMode: body.mode } });
+        await log(ws, "YOU", body.mode === "ASK" ? "Scheduled paydays will wait for your OK." : "Scheduled paydays will pay automatically within the budget.");
+        break;
       case "SET_PAUSED":
         await prisma.workspace.update({ where: { id: ws }, data: { autopilotPaused: !!body.paused } });
         await log(ws, "YOU", body.paused ? "Paused all scheduled paydays." : "Turned scheduled paydays back on.");

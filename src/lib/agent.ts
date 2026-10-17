@@ -332,7 +332,7 @@ function tools(ctx: Ctx) {
           data: {
             payRunId: next.id, workerId: e.worker.id, nameAsWritten: e.worker.name, kind: e.kind, amountCents: e.amountCents,
             description: e.description, calculation: e.calculation, sourceQuote: `Carried over from ${e.payRun.label}`, method,
-            stamp: "LOOK_AGAIN", aiNote: reason,
+            stamp: "LOOK_AGAIN", aiNote: reason, scheduleId: e.scheduleId,
             issues: JSON.stringify([`Carried over from ${e.payRun.label}: ${(e.statusDetail ?? e.status.toLowerCase()).replace(/\.$/, "")}.`, ...problems]),
           },
         });

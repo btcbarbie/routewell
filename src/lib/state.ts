@@ -68,6 +68,7 @@ export async function snapshot(workspaceId: string) {
     pretendToday: ws.pretendToday,
     paydayBudgetCents: ws.paydayBudgetCents,
     autopilotPaused: ws.autopilotPaused,
+    paydayMode: ws.paydayMode,
     treasury,
     fx,
     workers: ws.workers.map((w) => ({

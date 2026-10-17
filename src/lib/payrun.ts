@@ -131,7 +131,7 @@ async function summarizeDraft(runId: string, lines: string[]) {
 export async function addUsual(workspaceId: string) {
   const ws = await prisma.workspace.findUniqueOrThrow({ where: { id: workspaceId }, include: { workers: true, schedules: { where: { active: true } } } });
   const run = await draftRun(workspaceId);
-  const existing = await prisma.envelope.findMany({ where: { payRunId: run.id, status: "DRAFT" } });
+  const existing = await prisma.envelope.findMany({ where: { payRunId: run.id, status: { in: ["DRAFT", "HELD"] } } });
   const scheduled = new Set(ws.schedules.map((s) => s.workerId));
   const skipped: string[] = [];
   const created: string[] = [];
@@ -356,6 +356,15 @@ export async function payEnvelopes(workspaceId: string, runId: string, label: st
         await prisma.envelope.update({ where: { id: e.id }, data: { status: "FAILED", statusDetail: `The PYUSD transfer didn't go through: ${(err as Error).message.split("\n")[0]}` } });
       }
     }
+  }
+
+  // A scheduled payment that actually went out (paid, or accepted and processing) counts as this month's payday.
+  const sentScheduled = await prisma.envelope.findMany({ where: { id: { in: ready.map((e) => e.id) }, scheduleId: { not: null }, status: { in: ["PAID", "PENDING"] } } });
+  if (sentScheduled.length) {
+    const ws = await prisma.workspace.findUniqueOrThrow({ where: { id: workspaceId } });
+    const d = todayFor(ws);
+    const period = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    await prisma.schedule.updateMany({ where: { id: { in: sentScheduled.map((e) => e.scheduleId!) } }, data: { lastPaidPeriod: period } });
   }
 
 }

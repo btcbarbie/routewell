@@ -23,18 +23,26 @@ The homepage explains Routewell and offers two doors: **see the demo company** (
 - **Seal and send.** PayPal envelopes go out in one PayPal Payouts batch. PYUSD envelopes are sent to each worker's own wallet on Solana devnet. Routewell then shows what PayPal reports for each person: paid, not claimed yet, or failed, with the reason in plain words.
 - **Countries.** Each person sees only the payout options that work in their country, from a hand-checked list with sources (for example: PayPal isn't available in Pakistan, so PYUSD is offered). Each worker gets a private link to choose PayPal or PYUSD themselves.
 - **Scheduled paydays.** "Pay Jordan $1,500 every 28th" goes on a Bryntum calendar. On the day, code checks the approved amount, the monthly payday budget and the payout details, the AI explains the checks, and Routewell pays. Anything off is held back. Drag a payday on the calendar to move it. One switch pauses all of them.
-- **Ask in plain English.** "Add a $50 bonus for Maria" or "Pay Ali $30 on the 15th of every month". The AI proposes the change; nothing happens until you click Do it.
+- **The Routewell agent.** Claude with tools, working in steps you can see. Tell it what to do or ask about your records: "Pay everyone their usual, but hold Ali until he confirms his wallet", "How much did we pay Maria last month?". It looks things up (people, this month, payment history, country rules, the PYUSD wallet), then acts on this month's draft: adding, changing, holding back, switching payout method, or setting up scheduled paydays. Every step it takes is saved and shown as its trail.
+- **The agent follows up after paying.** Once PayPal's results are final, it works through anything that wasn't paid: failed or held payments are carried into the next pay run for your OK (switched to PYUSD only where the country allows it and details are on file), and unclaimed payments are never re-sent, because the money may still be claimed. It writes a reminder for you to send instead.
 
 ## What the AI does and doesn't do
 
-The AI (Claude Opus 5.5, through the Anthropic API with structured outputs) reads messages, sheets and receipt photos, writes the notes, flags problems, and turns plain-English requests into proposed changes. It never moves money by itself. Code enforces the rules: only owner-approved amounts are paid, scheduled paydays never exceed the budget, payout details are validated, and the country options come from a fixed, sourced list rather than the AI. Requests use Anthropic's server-side fallback, so a declined request is retried on Anthropic's recommended fallback model.
+Routewell uses Claude Opus 5.5 in three ways:
+
+- **Embedded:** it reads messages, spreadsheets and receipt photos into envelopes, checks every envelope against usual pay, rates, last month and your expense rules, and writes a short note on each.
+- **Agentic:** the Routewell agent uses tools in a loop (via the Anthropic SDK's tool runner). It's triggered by your instruction, by a scheduled payday coming up, and by PayPal's results arriving. Its steps are real tool calls saved by the server, not a generated story.
+- **Bounded:** the agent can't send money, change anyone's payout details or change the rules, and the code enforces that, not just the prompt. Money only moves when you press Seal and send, or on a scheduled payday you set to pay automatically within your budget. Seal and send carries a fingerprint of exactly what you reviewed, and the server refuses if anything changed since. Exact checks (duplicates, budgets, country rules, payout details) are ordinary code; the AI handles reading, judgement and explanations.
+
+Requests use Anthropic's server-side fallback, so a declined request is retried on Anthropic's recommended fallback model.
 
 ## Honest notes
 
 - **PayPal:** payouts use the PayPal Payouts API in the sandbox. All PayPal workers in the demo receive at one sandbox personal account, because sandbox payouts have to go to sandbox accounts.
 - **PYUSD:** transfers are sent from Routewell's own test wallet on Solana devnet, not through PayPal. Test PYUSD comes from the [Google Cloud Web3 faucet](https://cloud.google.com/application/web3/faucet) or the [Paxos faucet](https://faucet.paxos.com).
 - **Not payroll:** Routewell doesn't calculate or file taxes, so it isn't for salaried staff wages. Staff expense reimbursements are supported.
-- **Demo control:** scheduled paydays run on their date. The Paydays tab has a clearly labelled "Pretend it's this day" control so you can see one now.
+- **Scheduled paydays:** "Ask me first" (default) has the agent prepare the payday a few days ahead and wait for your Seal and send; "Pay automatically" pays on the day within your monthly budget. The Paydays tab has a clearly labelled "Pretend it's this day" demo control so you can see one now.
+- **Payment status:** Routewell checks PayPal for each batch's results every few seconds after sending (it doesn't use PayPal webhooks).
 - **Each visitor gets their own copy of the demo studio**, so you can try everything without affecting anyone else. "Start the demo over" gives you a fresh copy. A company you set up yourself is kept separately, and you can switch between the two.
 - **Your own company** can add people in the five countries Routewell has checked facts for so far (US, Nigeria, Pakistan, India, Philippines). PayPal payouts only arrive at PayPal sandbox accounts in this test version.
 

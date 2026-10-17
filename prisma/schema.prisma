@@ -18,6 +18,8 @@ model Workspace {
   // Scheduled paydays never spend more than this per month without asking.
   paydayBudgetCents Int     @default(300000)
   autopilotPaused  Boolean  @default(false)
+  // "ASK": the agent prepares scheduled paydays a few days ahead and waits for the owner. "AUTO": pay on the day within the budget.
+  paydayMode       String   @default("ASK")
   // Demo control: when set, scheduled paydays treat this date as "today". Shown clearly in the UI.
   pretendToday     String?
 

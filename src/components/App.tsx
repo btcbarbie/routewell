@@ -10,6 +10,7 @@ import { People } from "./People";
 import { Rules } from "./Rules";
 import { ThisMonth } from "./ThisMonth";
 import { Btn } from "./ui";
+import { reviewFingerprint } from "@/lib/fingerprint";
 
 type Tab = "month" | "paydays" | "people" | "history" | "rules";
 
@@ -149,7 +150,12 @@ export function App() {
           }}
           send={async () => {
             setBusy("sending");
-            await post("/api/send");
+            const out = await post("/api/send", { reviewed: reviewFingerprint(s.draft?.envelopes ?? []) });
+            if (!out) {
+              // Show what changed, keeping the message on screen.
+              const fresh = await fetch("/api/state").then((r) => r.json()).catch(() => null);
+              if (fresh?.company) setS(fresh as Snapshot);
+            }
             setBusy(null);
           }}
           ask={async (text) => ((await post("/api/ask", { text })) as { agentRunId?: string } | null)?.agentRunId ?? null}
@@ -161,6 +167,7 @@ export function App() {
         <Paydays
           s={s}
           busy={busy}
+          openMonth={() => setTab("month")}
           act={async (body) => {
             const running = (body as { action?: string }).action === "PRETEND_AND_RUN";
             if (running) setBusy("payday");

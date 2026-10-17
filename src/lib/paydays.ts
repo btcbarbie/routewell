@@ -2,7 +2,8 @@ import { prisma } from "./prisma";
 import { explainPayday } from "./ai";
 import { allowedMethods } from "./countries";
 import { dollars } from "./money";
-import { payEnvelopes } from "./payrun";
+import { draftRun, payEnvelopes } from "./payrun";
+import { runAgent } from "./agent";
 import { checkAndFollowUp } from "./followup";
 import { isValidAddress, treasuryBalance } from "./solana";
 import { log } from "./workspace";
@@ -11,20 +12,25 @@ function period(d: Date) {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
+const DAYS_AHEAD = 3;
+
 /**
- * Run the scheduled paydays that are due on `today`. Code decides what may be paid:
- * only the owner-approved amount, never over the monthly payday budget, and only to valid payout details.
- * The AI explains the checks; it never changes a decision.
+ * Scheduled paydays for `today`.
+ * "Ask me first": a few days before payday, the scheduled payments go into this month's draft and the agent
+ * looks them over, holding anything off; the owner approves with Seal and send.
+ * "Pay automatically": on the day, code checks the approved amount, the budget and payout details, then pays.
  */
 export async function runPaydays(workspaceId: string, today: Date) {
   const ws = await prisma.workspace.findUniqueOrThrow({ where: { id: workspaceId }, include: { schedules: { where: { active: true }, include: { worker: true } } } });
   const now = period(today);
-  const due = ws.schedules.filter((s) => s.dayOfMonth <= today.getUTCDate() && s.lastPaidPeriod !== now);
-  if (!due.length) return { ran: false, message: "Nothing is due on this date." };
+  const ask = ws.paydayMode !== "AUTO";
+  const due = ws.schedules.filter((s) => s.dayOfMonth <= today.getUTCDate() + (ask ? DAYS_AHEAD : 0) && s.lastPaidPeriod !== now);
+  if (!due.length) return { ran: false, message: ask ? `No scheduled payday in the next ${DAYS_AHEAD} days.` : "Nothing is due on this date." };
   if (ws.autopilotPaused) {
     await log(workspaceId, "AI", `${due.length} scheduled payment${due.length === 1 ? " was" : "s were"} due, but scheduled paydays are paused.`);
     return { ran: false, message: "Scheduled paydays are paused." };
   }
+  if (ask) return prepareForApproval(workspaceId, due, today);
 
   // Budget: scheduled payments already made this month count against it.
   const monthStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
@@ -109,10 +115,33 @@ export async function runPaydays(workspaceId: string, today: Date) {
   if (payable.length) {
     await payEnvelopes(workspaceId, run.id, run.label);
     await checkAndFollowUp(workspaceId, run.id);
-    await prisma.schedule.updateMany({ where: { id: { in: payable.map((c) => c.s.id) } }, data: { lastPaidPeriod: now } });
   } else {
     await prisma.payRun.update({ where: { id: run.id }, data: { status: "SENT", sentAt: new Date() } });
     await prisma.envelope.updateMany({ where: { payRunId: run.id }, data: { status: "HELD", statusDetail: "Held back by the payday checks." } });
   }
   return { ran: true, message: summary };
+}
+
+/** "Ask me first": put the coming scheduled payments into this month's draft, then let the agent look them over. */
+async function prepareForApproval(workspaceId: string, due: { id: string; workerId: string; amountCents: number; note: string; createdFrom: string; dayOfMonth: number; worker: { name: string; payoutMethod: string } }[], today: Date) {
+  const run = await draftRun(workspaceId);
+  const existing = await prisma.envelope.findMany({ where: { payRunId: run.id, scheduleId: { in: due.map((s) => s.id) } } });
+  const fresh = due.filter((s) => !existing.some((e) => e.scheduleId === s.id));
+  if (!fresh.length) return { ran: false, message: "The coming scheduled payments are already in this month's draft." };
+  for (const s of fresh) {
+    await prisma.envelope.create({
+      data: {
+        payRunId: run.id, workerId: s.workerId, nameAsWritten: s.worker.name, kind: "RETAINER", amountCents: s.amountCents,
+        description: `${s.note} (payday on the ${s.dayOfMonth}${s.dayOfMonth === 1 || s.dayOfMonth === 21 ? "st" : s.dayOfMonth === 2 || s.dayOfMonth === 22 ? "nd" : s.dayOfMonth === 3 || s.dayOfMonth === 23 ? "rd" : "th"})`,
+        calculation: `Approved: "${s.createdFrom}"`, sourceQuote: s.createdFrom, method: s.worker.payoutMethod,
+        stamp: "SCHEDULED", aiNote: "Scheduled payday, added for your OK.", scheduleId: s.id,
+      },
+    });
+  }
+  const dateLabel = today.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+  const goal = `It's ${dateLabel}. These scheduled payments are coming up and were added to this month's draft for the owner's OK: ${fresh
+    .map((s) => `${s.worker.name} ${dollars(s.amountCents)} on the ${s.dayOfMonth}`)
+    .join("; ")}. Look them over and hold back anything that shouldn't be paid.`;
+  const { reply } = await runAgent(workspaceId, "PAYDAY", goal);
+  return { ran: true, message: reply };
 }

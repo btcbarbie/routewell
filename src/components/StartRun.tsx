@@ -28,7 +28,7 @@ export function StartRun({
 }) {
   const [way, setWay] = useState<Way>("usual");
   const scheduled = new Set(s.schedules.filter((x) => x.active).map((x) => x.workerId));
-  const inDraft = new Set((s.draft?.envelopes ?? []).filter((e) => e.status === "DRAFT" && e.kind === "WORK").map((e) => e.workerId));
+  const inDraft = new Set((s.draft?.envelopes ?? []).filter((e) => (e.status === "DRAFT" || e.status === "HELD") && e.kind === "WORK").map((e) => e.workerId));
   const usual = s.workers.filter((w) => w.usualCents && !scheduled.has(w.id) && !inDraft.has(w.id));
   const usualTotal = usual.reduce((sum, w) => sum + (w.usualCents ?? 0), 0);
   const notIncluded = s.workers.filter((w) => !usual.includes(w));

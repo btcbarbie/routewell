@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import type { Snapshot } from "@/lib/state";
+import { AgentTrail } from "./AgentTrail";
 import { AiNote, Btn, Rail, SectionTitle, dollars } from "./ui";
 
 // Bryntum runs in the browser only.
@@ -13,9 +14,16 @@ const PaydayCalendar = dynamic(() => import("./PaydayCalendar").then((m) => m.Pa
 
 type Act = (body: object) => Promise<(Snapshot & { message?: string }) | null>;
 
-export function Paydays({ s, act, busy }: { s: Snapshot; act: Act; busy: string | null }) {
+export function Paydays({ s, act, busy, openMonth }: { s: Snapshot; act: Act; busy: string | null; openMonth: () => void }) {
+  // The agent's most recent piece of work, if it was preparing a payday.
+  const latestPrep = s.agentRuns[0]?.trigger === "PAYDAY" ? s.agentRuns[0] : undefined;
   const [budget, setBudget] = useState((s.paydayBudgetCents / 100).toFixed(0));
   const [pretend, setPretend] = useState(defaultPretend(s));
+  const [lastMode, setLastMode] = useState(s.paydayMode);
+  if (lastMode !== s.paydayMode) {
+    setLastMode(s.paydayMode);
+    setPretend(defaultPretend(s));
+  }
   const [message, setMessage] = useState<string | null>(null);
   const name = (id: string) => s.workers.find((w) => w.id === id)?.name ?? "Someone";
   const latest = s.runs.find((r) => r.kind === "SCHEDULED");
@@ -56,12 +64,24 @@ export function Paydays({ s, act, busy }: { s: Snapshot; act: Act; busy: string 
 
         <aside className="space-y-6">
           <section>
-            <SectionTitle>Rules for paying on time</SectionTitle>
-            <ul className="space-y-1.5 text-sm">
-              <li>→ Only the amounts you approved.</li>
-              <li>→ Never more than the monthly payday budget.</li>
-              <li>→ Anything off is held back and shown to you.</li>
-            </ul>
+            <SectionTitle>How paydays work</SectionTitle>
+            <p className="text-sm">Some people are paid the same amount on the same day every month. Set it once and Routewell remembers.</p>
+            <fieldset className="mt-3 space-y-2 text-sm">
+              {(
+                [
+                  ["ASK", "Ask me first", "A few days before, the agent puts the payment in this month's envelopes, checks it, and waits for you to press Seal and send."],
+                  ["AUTO", "Pay automatically", "On the day, Routewell pays the amount you approved, as long as it's within your monthly budget. Anything off is held back."],
+                ] as const
+              ).map(([mode, title, body]) => (
+                <label key={mode} className={`block cursor-pointer rounded-[4px] border-2 p-2.5 ${s.paydayMode === mode ? "border-ink bg-paper-hi" : "border-paper-line"}`}>
+                  <span className="flex items-center gap-2 font-semibold">
+                    <input type="radio" name="paydayMode" checked={s.paydayMode === mode} onChange={() => act({ action: "SET_MODE", mode })} className="accent-[#ff5a1f]" />
+                    {title}
+                  </span>
+                  <span className="mt-0.5 block pl-5 text-[13px] text-ink-soft">{body}</span>
+                </label>
+              ))}
+            </fieldset>
             <form
               className="mt-3 flex items-center gap-2"
               onSubmit={async (e) => {
@@ -80,8 +100,8 @@ export function Paydays({ s, act, busy }: { s: Snapshot; act: Act; busy: string 
               </Btn>
             </form>
             <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm">
-              <input type="checkbox" checked={!s.autopilotPaused} onChange={(e) => act({ action: "SET_PAUSED", paused: !e.target.checked })} className="size-4 accent-[#ff5a1f]" />
-              Pay scheduled paydays automatically
+              <input type="checkbox" checked={s.autopilotPaused} onChange={(e) => act({ action: "SET_PAUSED", paused: e.target.checked })} className="size-4 accent-[#ff5a1f]" />
+              Pause all scheduled paydays
             </label>
           </section>
 
@@ -112,7 +132,11 @@ export function Paydays({ s, act, busy }: { s: Snapshot; act: Act; busy: string 
 
           <section className="rounded-[4px] border-2 border-dashed border-ink p-3">
             <p className="font-mono text-[11px] font-semibold tracking-wider">DEMO CONTROL</p>
-            <p className="mt-1 text-sm">Paydays run on their date. To see one now, pretend it&apos;s another day.</p>
+            <p className="mt-1 text-sm">
+              {s.paydayMode === "AUTO"
+                ? "Paydays run on their date. To see one now, pretend it's payday."
+                : "The agent prepares a payday a few days before. To see it now, pretend it's a couple of days before payday."}
+            </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <input type="date" value={pretend} onChange={(e) => setPretend(e.target.value)} className="rounded-[3px] border-[1.5px] border-ink bg-paper-hi px-2 py-1 font-mono text-sm" aria-label="Pretend today is" />
               <Btn
@@ -134,7 +158,15 @@ export function Paydays({ s, act, busy }: { s: Snapshot; act: Act; busy: string 
                 </Btn>
               </p>
             )}
-            {message && <p className="mt-2 font-hand text-[19px] leading-tight">{message}</p>}
+            {message && !latestPrep && <p className="mt-2 font-hand text-[19px] leading-tight">{message}</p>}
+            {latestPrep && (
+              <div className="mt-3">
+                <AgentTrail run={latestPrep} />
+                <Btn className="mt-2" onClick={openMonth}>
+                  Review it in This month
+                </Btn>
+              </div>
+            )}
           </section>
         </aside>
       </div>
@@ -145,8 +177,8 @@ export function Paydays({ s, act, busy }: { s: Snapshot; act: Act; busy: string 
 function defaultPretend(s: Snapshot) {
   const today = new Date(`${s.today}T12:00:00Z`);
   const due = s.schedules.find((x) => x.active);
-  const day = due ? due.dayOfMonth : 28;
-  const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), day, 12));
+  const day = (due ? due.dayOfMonth : 28) - (s.paydayMode === "AUTO" ? 0 : 2);
+  const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), Math.max(1, day), 12));
   if (d < today) d.setUTCMonth(d.getUTCMonth() + 1);
   return d.toISOString().slice(0, 10);
 }

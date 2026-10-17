@@ -3,17 +3,22 @@ import { checkLimit, clientIp } from "@/lib/limits";
 import { prisma } from "@/lib/prisma";
 import { payEnvelopes } from "@/lib/payrun";
 import { checkAndFollowUp } from "@/lib/followup";
+import { reviewFingerprint } from "@/lib/fingerprint";
 import { forgetTreasury, snapshot } from "@/lib/state";
 import { workspaceId, log } from "@/lib/workspace";
 
 export async function POST(req: Request) {
   return handle(async () => {
     checkLimit("send", clientIp(req));
+    const { reviewed } = (await req.json().catch(() => ({}))) as { reviewed?: string };
     const ws = await workspaceId();
     const run = await prisma.payRun.findFirst({ where: { workspaceId: ws, status: "DRAFT", kind: "MANUAL" }, include: { envelopes: true } });
     if (!run) throw new Error("There's no pay run to send.");
     const open = run.envelopes.filter((e) => e.status === "DRAFT" && e.stamp === "LOOK_AGAIN" && !e.ownerDecision);
     if (open.length) throw new Error(`${open.length} envelope${open.length === 1 ? " needs" : "s need"} a look first.`);
+    if (!reviewed || reviewed !== reviewFingerprint(run.envelopes)) {
+      throw new Error("This month's pay changed since you looked at it. The page has been refreshed: look it over, then send.");
+    }
     await log(ws, "YOU", `Sealed and sent ${run.label}.`);
     await payEnvelopes(ws, run.id, run.label);
     await checkAndFollowUp(ws, run.id);
