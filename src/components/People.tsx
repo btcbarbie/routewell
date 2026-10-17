@@ -6,6 +6,41 @@ import { AddPerson } from "./AddPerson";
 import { PaydayCalendarSection, PaydaySettings, PersonPayday } from "./Paydays";
 import { Btn, Rail, SectionTitle, dollars, shortAddress, type Worker } from "./ui";
 
+type Group = "PAYDAY" | "MONTH" | "STAFF";
+
+// How each person gets paid decides which group they're in.
+const GROUPS: { id: Group; title: string; body: string }[] = [
+  { id: "PAYDAY", title: "On a payday", body: "The same amount on the same day every month. Routewell prepares it for you, so you don't add it to This month." },
+  { id: "MONTH", title: "Paid in This month", body: "The amount depends on the work, like hours or pieces done. Add them to this month's pay each month." },
+  { id: "STAFF", title: "Staff: expenses paid back", body: "Paid back for work costs, only when they send receipts. Add the receipts in This month." },
+];
+
+function groupOf(s: Snapshot, w: Worker): Group {
+  if (s.schedules.some((x) => x.workerId === w.id)) return "PAYDAY";
+  return w.role === "STAFF" ? "STAFF" : "MONTH";
+}
+
+const ordinal = (n: number) => `${n}${n % 10 === 1 && n !== 11 ? "st" : n % 10 === 2 && n !== 12 ? "nd" : n % 10 === 3 && n !== 13 ? "rd" : "th"}`;
+
+/** One line at the top of each card saying how this person gets paid. */
+function HowPaid({ s, w }: { s: Snapshot; w: Worker }) {
+  const group = groupOf(s, w);
+  const sch = s.schedules.filter((x) => x.workerId === w.id);
+  const text =
+    group === "PAYDAY"
+      ? sch.map((x) => `${dollars(x.amountCents)} on the ${ordinal(x.dayOfMonth)} of every month${x.active ? "" : " (paused)"}`).join(", ")
+      : group === "STAFF"
+        ? "When they send receipts"
+        : `Depends on the work · ${w.rateNote}`;
+  const label = group === "PAYDAY" ? "ON A PAYDAY" : group === "STAFF" ? "EXPENSES PAID BACK" : "PAID IN THIS MONTH";
+  return (
+    <div className={`-mx-4 -mt-4 mb-3 flex flex-wrap items-baseline gap-x-2 rounded-t-[2px] px-4 py-2 text-[13px] ${group === "PAYDAY" ? "bg-ink text-paper-hi" : "border-b-[1.5px] border-dashed border-paper-line"}`}>
+      <span className="font-mono text-[11px] font-semibold tracking-wider">{label}</span>
+      <span className={group === "PAYDAY" ? "" : "text-ink-soft"}>{text}</span>
+    </div>
+  );
+}
+
 type PaydayAct = (body: object) => Promise<(Snapshot & { message?: string }) | null>;
 
 export function People({
@@ -23,26 +58,12 @@ export function People({
 }) {
   const [copied, setCopied] = useState<string | null>(null);
   const [adding, setAdding] = useState(s.workers.length === 0);
-  return (
-    <div className="pt-8">
-      <SectionTitle
-        hint={
-          !adding && (
-            <Btn onClick={() => setAdding(true)} className="!py-1.5">
-              Add a person
-            </Btn>
-          )
-        }
-      >
-        Your people
-      </SectionTitle>
-      {adding && <AddPerson countries={s.countries} add={change} onDone={() => setAdding(false)} />}
-      {s.workers.length > 0 && <p className="-mt-1 mb-3 text-[13px] text-ink-soft">What works in each person&apos;s country comes from a checked list with sources, not from the AI.</p>}
-      <div className="grid gap-3.5 md:grid-cols-2">
-        {s.workers.map((w) => {
+
+  function renderCard(w: Worker) {
           const facts = s.countries[w.country];
-          return (
+    return (
             <article key={w.id} className="rounded-[4px] border-2 border-ink bg-paper-hi p-4">
+              <HowPaid s={s} w={w} />
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h3 className="font-display text-[19px] font-bold">{w.name}</h3>
@@ -108,8 +129,34 @@ export function People({
               </div>
             </article>
           );
-        })}
-      </div>
+  }
+
+  return (
+    <div className="pt-8">
+      <SectionTitle
+        hint={
+          !adding && (
+            <Btn onClick={() => setAdding(true)} className="!py-1.5">
+              Add a person
+            </Btn>
+          )
+        }
+      >
+        Your people
+      </SectionTitle>
+      {adding && <AddPerson countries={s.countries} add={change} onDone={() => setAdding(false)} />}
+      {s.workers.length > 0 && <p className="-mt-1 mb-3 text-[13px] text-ink-soft">What works in each person&apos;s country comes from a checked list with sources, not from the AI.</p>}
+      {GROUPS.map((g) => {
+        const people = s.workers.filter((w) => groupOf(s, w) === g.id);
+        if (!people.length) return null;
+        return (
+          <section key={g.id} className="mb-7">
+            <h3 className="font-display text-lg font-bold">{g.title}</h3>
+            <p className="mb-3 text-[14px] text-ink-soft">{g.body}</p>
+            <div className="grid gap-3.5 md:grid-cols-2">{people.map((w) => renderCard(w))}</div>
+          </section>
+        );
+      })}
       {s.workers.length > 0 && (
         <>
           <PaydaySettings s={s} act={paydays} busy={busy} openMonth={openMonth} />

@@ -127,7 +127,7 @@ async function summarizeDraft(runId: string, lines: string[]) {
 
 // ---------- Direct ways in: everyone's usual amount, or one envelope at a time ----------
 
-/** One envelope per person with a usual amount, skipping people paid on a schedule or already in this pay run. */
+/** One envelope per person with a usual amount, skipping people on a payday or already in this pay run. */
 export async function addUsual(workspaceId: string) {
   const ws = await prisma.workspace.findUniqueOrThrow({ where: { id: workspaceId }, include: { workers: true, schedules: { where: { active: true } } } });
   const run = await draftRun(workspaceId);
@@ -137,7 +137,7 @@ export async function addUsual(workspaceId: string) {
   const created: string[] = [];
   for (const w of ws.workers) {
     if (scheduled.has(w.id)) {
-      skipped.push(`${w.name} (paid on a schedule)`);
+      skipped.push(`${w.name} (on a payday)`);
       continue;
     }
     if (!w.usualCents) {

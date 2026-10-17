@@ -75,7 +75,7 @@ export function StartRun({
                   <p className="mt-2 text-[13px] text-ink-soft">
                     Not included:{" "}
                     {notIncluded
-                      .map((w) => `${w.name} (${scheduled.has(w.id) ? "paid on a schedule" : inDraft.has(w.id) ? "already added" : w.role === "STAFF" && !w.usualCents ? "staff, expenses only" : "no usual amount"})`)
+                      .map((w) => `${w.name} (${scheduled.has(w.id) ? "on a payday" : inDraft.has(w.id) ? "already added" : w.role === "STAFF" && !w.usualCents ? "staff, expenses only" : "no usual amount"})`)
                       .join(", ")}
                     . Set usual amounts on People.
                   </p>
