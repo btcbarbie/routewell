@@ -118,6 +118,54 @@ export const COUNTRIES: Record<string, CountryFacts> = {
       { label: "Kenya Virtual Asset Service Providers Act 2025", url: "https://cryptoslate.com/crypto-laws/kenya-virtual-asset-service-providers-act-2025/" },
     ],
   },
+  ZM: {
+    code: "ZM",
+    timezone: "Africa/Lusaka",
+    name: "Zambia",
+    currency: "ZMW",
+    currencySymbol: "K",
+    paypal: { canReceive: false, note: "Zambia isn't on PayPal's list of countries that can receive Payouts." },
+    pyusd: {
+      allowed: true,
+      note: "Crypto isn't banned in Zambia. Since March 2026, crypto service providers must register with the Bank of Zambia.",
+    },
+    sources: [
+      { label: "PayPal Payouts countries", url: "https://developer.paypal.com/payouts/supported-features" },
+      { label: "Bank of Zambia: register crypto service providers (2026)", url: "https://www.zambiamonitor.com/bank-of-zambia-calls-for-registration-of-cryptocurrency-service-providers/" },
+    ],
+  },
+  ZW: {
+    code: "ZW",
+    timezone: "Africa/Harare",
+    name: "Zimbabwe",
+    currency: "ZWG",
+    currencySymbol: "ZiG",
+    paypal: { canReceive: false, note: "Zimbabwe isn't on PayPal's list of countries that can receive Payouts." },
+    pyusd: {
+      allowed: true,
+      note: "Crypto businesses in Zimbabwe must register with the Reserve Bank's financial intelligence unit (2026). Crypto isn't legal tender.",
+    },
+    sources: [
+      { label: "PayPal Payouts countries", url: "https://developer.paypal.com/payouts/supported-features" },
+      { label: "Zimbabwe crypto business registration (2026)", url: "https://news.fundsforngos.org/2026/06/17/cryptocurrency-businesses-in-zimbabwe-face-mandatory-annual-registration/" },
+    ],
+  },
+  AM: {
+    code: "AM",
+    timezone: "Asia/Yerevan",
+    name: "Armenia",
+    currency: "AMD",
+    currencySymbol: "֏",
+    paypal: { canReceive: false, note: "Armenia isn't on PayPal's list of countries that can receive Payouts." },
+    pyusd: {
+      allowed: true,
+      note: "Armenia's central bank licenses crypto service providers under rules in force since January 2026.",
+    },
+    sources: [
+      { label: "PayPal Payouts countries", url: "https://developer.paypal.com/payouts/supported-features" },
+      { label: "Crypto regulation in Armenia (2026)", url: "https://mblegal.am/crypto-regulation-in-armenia/" },
+    ],
+  },
 };
 
 export function countryFacts(code: string): CountryFacts | undefined {

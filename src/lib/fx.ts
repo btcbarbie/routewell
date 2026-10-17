@@ -10,7 +10,7 @@ export async function usdRates(): Promise<Fx | null> {
     const res = await fetch(SOURCE, { signal: AbortSignal.timeout(4000) });
     const json = await res.json();
     if (json.result !== "success") return cache.data;
-    const pick = ["NGN", "INR", "PHP", "PKR", "GHS", "KES"];
+    const pick = ["NGN", "INR", "PHP", "PKR", "GHS", "KES", "ZMW", "ZWG", "AMD"];
     const rates: Record<string, number> = {};
     for (const c of pick) if (json.rates?.[c]) rates[c] = json.rates[c];
     cache = { at: Date.now(), data: { rates, asOf: json.time_last_update_utc, source: "open.er-api.com" } };
