@@ -1,6 +1,6 @@
 # Routewell
 
-**Everyone gets paid.**
+**Everyone gets paid.** AI checks. You decide. PayPal and PYUSD deliver.
 
 **Live demo:** https://routewell-production.up.railway.app (PayPal sandbox and Solana devnet, test money only)
 

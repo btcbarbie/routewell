@@ -36,6 +36,28 @@ const GAP_COUNTRIES = Object.values(COUNTRIES)
   .map((c) => c.name)
   .join(", ");
 
+const STEPS: [string, string][] = [
+  ["Prepare", "Pay everyone their usual, tell the AI what's different, add people one by one, or drop in a spreadsheet and receipts."],
+  ["Check", "AI checks every payment against their rate, last month and your expense rules, and says why anything looks off."],
+  ["Approve", "You fix, hold back or OK each flagged payment. Nothing moves until you press Seal and send."],
+  ["Send", "PayPal pays the people it reaches, in one batch. PYUSD goes to everyone else's own wallet."],
+  ["Follow up", "The agent works through anything that wasn't paid, without ever paying anyone twice."],
+];
+
+const CONTROL: [string, string][] = [
+  ["Nothing moves without your OK", "The AI prepares and checks. Payments go out only when you press Seal and send, and the server refuses if anything changed since you looked."],
+  ["A status on every payment", "Paid, still processing, not claimed yet, or not paid, from PayPal's own results and the blockchain."],
+  ["Every decision recorded", "What you changed, what the AI flagged and why, and each step the agent took."],
+  ["Nobody paid twice", "The same receipt or amount is caught before sending, and a payment that might still arrive is never sent again."],
+];
+
+const PYUSD_FACTS: [string, string][] = [
+  ["Their own wallet", "PYUSD, PayPal's digital dollar, goes straight to the person's own wallet on Solana. They need a wallet app that holds Solana tokens."],
+  ["Stays in dollars", "It holds its dollar value, so they can keep it or convert it when they choose."],
+  ["Cashing out", "They change it into local money through an exchange or app available where they live. That step is outside Routewell."],
+  ["Only where it's allowed", "Routewell offers PYUSD only in countries where we've checked that holding crypto is legal, with sources shown. In this demo it runs on Solana's test network with test coins."],
+];
+
 type Session = { demo: { name: string } | null; mine: { name: string } | null };
 
 // Only city and time zone are used, for the clock strip.
@@ -109,7 +131,10 @@ export function Home() {
             gets <em className="not-italic text-orange">paid.</em>
           </h1>
           <p className="mt-5 max-w-md text-lg leading-relaxed text-ink-soft">
-            PayPal Payouts pays many people at once, but it can&apos;t pay freelancers in Nigeria or Pakistan, and it sends whatever amounts you give it. Routewell fills those gaps, and uses PayPal Payouts everywhere it works.
+            Pay the people who work for you, anywhere: through PayPal where it reaches, in PYUSD where it doesn&apos;t.
+          </p>
+          <p className="mt-3 font-display text-xl font-bold">
+            AI checks. You decide. <span className="text-orange">PayPal and PYUSD deliver.</span>
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
             {ownButton}
@@ -163,36 +188,48 @@ export function Home() {
       {/* How it works */}
       <section className="border-t-2 border-ink py-10">
         <h2 className="font-display text-3xl font-bold">How it works</h2>
-        <ol className="mt-6 grid gap-4 md:grid-cols-3">
-          {[
-            ["Add this month's pay", "Pay everyone their usual amount in one click, tell the AI what's different, add people one by one, or drop in a spreadsheet or receipts."],
-            ["AI checks every envelope", "Each person gets an envelope stamped CHECKED or LOOK AGAIN, with a short note saying why."],
-            ["Seal and send", "You approve, and everyone is paid at once. Then you see who got it, who hasn't claimed it, and why."],
-          ].map(([title, body], i) => (
+        <ol className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {STEPS.map(([title, body], i) => (
             <li key={title} className="rounded-[4px] border-2 border-ink bg-paper-hi p-4">
               <span className="font-mono text-sm font-semibold text-orange">0{i + 1}</span>
-              <h3 className="mt-1 font-display text-xl font-bold">{title}</h3>
-              <p className="mt-1.5 text-[15px] text-ink-soft">{body}</p>
+              <h3 className="mt-1 font-display text-lg font-bold">{title}</h3>
+              <p className="mt-1 text-[14px] text-ink-soft">{body}</p>
             </li>
           ))}
         </ol>
+        <p className="mt-3 text-[14px] text-ink-soft">
+          Someone paid the same amount every month? Give them a payday: the agent prepares it a few days ahead and waits for your OK.
+        </p>
       </section>
 
-      {/* Paydays */}
-      <section className="grid gap-6 border-t-2 border-ink py-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-center">
-        <div>
-          <h2 className="font-display text-3xl font-bold">Paydays that don&apos;t get forgotten</h2>
-          <p className="mt-2 text-ink-soft">
-            Say it once: &ldquo;Pay Jordan $1,500 every 28th.&rdquo; A few days before, the agent puts it in this month&apos;s pay, checks it&apos;s the amount you approved, and waits for your OK. Or let it pay automatically on the day, within your monthly budget.
-          </p>
-        </div>
-        <div className="rounded-[4px] border-2 border-ink bg-paper-hi p-4">
-          <div className="flex items-center justify-between">
-            <b className="font-display text-lg">Jordan Lee</b>
-            <Stamp kind="SCHEDULED" />
-          </div>
-          <p className="font-mono text-sm">$1,500.00 on the 28th, every month</p>
-          <AiNote text="Same $1,500 you approved, and it matches September. PayPal details are complete. Ready for your OK." />
+      {/* Control */}
+      <section className="border-t-2 border-ink py-10">
+        <h2 className="font-display text-3xl font-bold">You stay in control</h2>
+        <ul className="mt-6 grid gap-3 md:grid-cols-2">
+          {CONTROL.map(([title, body]) => (
+            <li key={title} className="flex gap-3 rounded-[4px] border-2 border-ink bg-paper-hi p-4">
+              <span className="font-display text-xl text-orange" aria-hidden>
+                ✓
+              </span>
+              <span>
+                <b className="font-display text-lg">{title}</b>
+                <span className="block text-[14px] text-ink-soft">{body}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* PYUSD */}
+      <section className="border-t-2 border-ink py-10">
+        <h2 className="max-w-2xl font-display text-3xl font-bold">How PYUSD reaches people</h2>
+        <div className="mt-6 grid gap-3 md:grid-cols-2">
+          {PYUSD_FACTS.map(([title, body]) => (
+            <div key={title} className="rounded-[4px] border-2 border-dashed border-ink p-4">
+              <h3 className="font-display text-lg font-bold">{title}</h3>
+              <p className="mt-1 text-[14px] text-ink-soft">{body}</p>
+            </div>
+          ))}
         </div>
       </section>
 
