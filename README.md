@@ -44,7 +44,7 @@ Requests use Anthropic's server-side fallback, so a declined request is retried 
 - **Scheduled paydays:** "Ask me first" (default) has the agent prepare the payday a few days ahead and wait for your Seal and send; "Pay automatically" pays on the day within your monthly budget. The People tab has a clearly labelled "Pretend it's this day" demo control so you can see one now.
 - **Payment status:** Routewell checks PayPal for each batch's results every few seconds after sending (it doesn't use PayPal webhooks).
 - **Each visitor gets their own copy of the demo studio**, so you can try everything without affecting anyone else. "Start the demo over" gives you a fresh copy. A company you set up yourself is kept separately, and you can switch between the two.
-- **Your own company** can add people in the five countries Routewell has checked facts for so far (US, Nigeria, Pakistan, India, Philippines). PayPal payouts only arrive at PayPal sandbox accounts in this test version.
+- **Your own company** can add people in the 10 countries Routewell has checked facts for so far: the US, India, the Philippines and Kenya (PayPal or PYUSD), and Nigeria, Pakistan, Ghana, Zambia, Zimbabwe and Armenia (PYUSD, because PayPal Payouts doesn't reach them). PayPal payouts only arrive at PayPal sandbox accounts in this test version.
 
 ## Built with
 
