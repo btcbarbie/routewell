@@ -51,7 +51,8 @@ export async function createDemoWorkspace() {
 
   const now = new Date();
   const lastMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 28, 15));
-  const sixth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 6, 15));
+  // Sam was paid back on the 6th, or yesterday early in the month, so it's never in the future.
+  const sixth = new Date(Math.min(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 6, 15), now.getTime() - 86_400_000));
 
   const ws = await prisma.workspace.create({
     data: {

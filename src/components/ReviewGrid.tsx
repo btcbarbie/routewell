@@ -30,7 +30,6 @@ export const paperTheme = themeQuartz.withParams({
 type Row = {
   id: string;
   person: string;
-  where: string;
   what: string;
   amount: number;
   method: string;
@@ -65,7 +64,6 @@ export function ReviewGrid({
         return {
           id: e.id,
           person: w?.name ?? e.nameAsWritten,
-          where: w ? `${w.city}, ${w.countryName}` : "Unknown",
           what: e.description,
           amount: e.amountCents / 100,
           method: e.method,
@@ -81,9 +79,8 @@ export function ReviewGrid({
 
   const cols: ColDef<Row>[] = useMemo(
     () => [
-      { field: "person", headerName: "Person", pinned: "left", minWidth: 150 },
-      { field: "where", headerName: "Where", minWidth: 150 },
-      { field: "what", headerName: "What for", minWidth: 200, flex: 1 },
+      { field: "person", headerName: "Person", pinned: "left", width: 130 },
+      { field: "what", headerName: "What for", minWidth: 140, flex: 0.8, wrapText: true, autoHeight: true },
       {
         field: "amount",
         headerName: "Amount",
@@ -91,7 +88,7 @@ export function ReviewGrid({
         cellDataType: "number",
         valueFormatter: (p) => dollars(Math.round((p.value ?? 0) * 100)),
         cellClass: "font-mono",
-        minWidth: 120,
+        width: 115,
       },
       {
         field: "method",
@@ -100,22 +97,23 @@ export function ReviewGrid({
         cellEditor: "agSelectCellEditor",
         cellEditorParams: (p: { data: Row }) => ({ values: p.data.methods }),
         valueFormatter: (p) => (p.value === "PYUSD" ? "PYUSD" : "PayPal"),
-        minWidth: 110,
+        width: 110,
       },
-      { field: "stamp", headerName: "Check", valueFormatter: (p) => STAMP_TEXT[p.value] ?? p.value, minWidth: 120, filter: true },
-      { field: "issues", headerName: "Needs a look because", minWidth: 260, flex: 1, wrapText: true, autoHeight: true },
-      { field: "note", headerName: "AI note", minWidth: 280, flex: 1.4, wrapText: true, autoHeight: true, cellClass: "font-hand text-[17px] leading-snug" },
+      { field: "stamp", headerName: "Check", valueFormatter: (p) => STAMP_TEXT[p.value] ?? p.value, width: 110, filter: true },
+      { field: "issues", headerName: "Why look again", minWidth: 160, flex: 1, wrapText: true, autoHeight: true },
+      { field: "note", headerName: "AI note", minWidth: 200, flex: 1.3, wrapText: true, autoHeight: true, cellClass: "font-hand text-[17px] leading-snug" },
     ],
     [],
   );
 
   return (
-    <div className="h-[520px] w-full">
+    <div className="w-full">
       <AgGridReact<Row>
         theme={paperTheme}
+        domLayout="autoHeight"
         rowData={rows}
         columnDefs={cols}
-        defaultColDef={{ sortable: true, resizable: true, filter: true }}
+        defaultColDef={{ sortable: true, resizable: true, filter: true, cellStyle: { lineHeight: "1.4", paddingTop: "10px", paddingBottom: "10px" } }}
         getRowId={(p) => p.data.id}
         getRowStyle={(p: RowClassParams<Row>) => (p.data?.needsLook ? { background: "#f2ff4d" } : undefined)}
         stopEditingWhenCellsLoseFocus

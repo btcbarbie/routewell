@@ -45,7 +45,7 @@ const STEPS: [string, string][] = [
 ];
 
 const CONTROL: [string, string][] = [
-  ["Nothing moves without your OK", "The AI prepares and checks. Payments go out only when you press Seal and send, and the server refuses if anything changed since you looked."],
+  ["Nothing moves without your OK", "The AI prepares and checks. Payments go out when you press Seal and send, and the server refuses if anything changed since you looked. A payday only pays by itself if you turn that on, within your budget."],
   ["A status on every payment", "Paid, still processing, not claimed yet, or not paid, from PayPal's own results and the blockchain."],
   ["Every decision recorded", "What you changed, what the AI flagged and why, and each step the agent took."],
   ["Nobody paid twice", "The same receipt or amount is caught before sending, and a payment that might still arrive is never sent again."],

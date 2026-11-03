@@ -151,7 +151,7 @@ export async function addUsual(workspaceId: string) {
     const e = await prisma.envelope.create({
       data: {
         payRunId: run.id, workerId: w.id, nameAsWritten: w.name, kind: "WORK", amountCents: w.usualCents,
-        description: `Usual pay${w.work ? `, ${w.work.toLowerCase()}` : ""}`, calculation: `Usual amount (${w.rateNote})`,
+        description: `Usual pay${w.work ? `, ${/^[A-Z]{2}/.test(w.work) ? w.work : w.work.toLowerCase()}` : ""}`, calculation: `Usual amount (${w.rateNote})`,
         sourceQuote: "Pay everyone their usual", method: w.payoutMethod, stamp: "CHECKED", aiNote: "Checking…",
       },
     });
