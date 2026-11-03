@@ -10,6 +10,8 @@
   --orange: #ff5a1f;
   --acid: #f2ff4d;
   --green: #2f6b4f;
+  --paypal: #0070e0;
+  --pyusd: #00875a;
 }
 
 @theme inline {
@@ -21,6 +23,8 @@
   --color-orange: var(--orange);
   --color-acid: var(--acid);
   --color-green: var(--green);
+  --color-paypal: var(--paypal);
+  --color-pyusd: var(--pyusd);
   --font-display: var(--nf-display), Georgia, serif;
   --font-sans: var(--nf-ui), system-ui, sans-serif;
   --font-mono: var(--nf-numbers), ui-monospace, monospace;
