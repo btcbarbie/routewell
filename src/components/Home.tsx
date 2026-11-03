@@ -131,7 +131,7 @@ export function Home() {
             gets <em className="not-italic text-orange">paid.</em>
           </h1>
           <p className="mt-5 max-w-md text-lg leading-relaxed text-ink-soft">
-            Pay the people who work for you, anywhere: through <Brand name="PayPal" /> where it reaches, and <Brand name="PYUSD" /> where it doesn&apos;t.
+            Pay the people who work for you, anywhere: through <span className="text-paypal">PayPal</span> where it reaches, and <span className="text-pyusd">PYUSD</span> where it doesn&apos;t.
           </p>
           <p className="mt-3 font-display text-xl font-bold">
             AI checks. You decide. <span className="text-paypal">PayPal</span> and <span className="text-pyusd">PYUSD</span> deliver.
@@ -289,10 +289,4 @@ function SampleEnvelope({ name, place, amount, method, stamp, note, loud = false
       <AiNote text={note} loud={loud} />
     </div>
   );
-}
-
-/** PayPal and PYUSD, the two ways Routewell pays, each in its own colour. */
-function Brand({ name }: { name: "PayPal" | "PYUSD" }) {
-  const look = name === "PayPal" ? "text-paypal bg-paypal/10 border-paypal" : "text-pyusd bg-pyusd/10 border-pyusd";
-  return <b className={`rounded-[3px] border-b-[3px] px-1 font-display font-black ${look}`}>{name}</b>;
 }
