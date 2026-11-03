@@ -16,7 +16,7 @@ const GAPS = [
   },
   {
     title: "They can't keep dollars",
-    payouts: "In India, PayPal converts every payment to rupees and sends it to the bank.",
+    payouts: "In India, PayPal accounts can't hold dollars: payments are converted to rupees and sent to the bank.",
     routewell: "Lets each person choose PYUSD instead, so their pay stays in dollars.",
   },
   {
@@ -101,7 +101,7 @@ export function Home() {
   );
   const ownButton = session?.mine ? (
     <Btn variant="primary" onClick={() => open("mine")} disabled={busy !== null}>
-      {busy === "mine" ? "Opening…" : `Open ${session.mine.name}`}
+      {busy === "mine" ? "Opening…" : "Open your company"}
     </Btn>
   ) : (
     <Link href="/start" className="inline-block rounded-[4px] border-2 border-ink bg-orange px-5 py-3 font-display text-[17px] font-bold text-paper-hi shadow-[4px_4px_0_var(--ink)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_var(--ink)]">

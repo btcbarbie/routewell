@@ -10,7 +10,7 @@ Routewell helps small teams pay contractors and pay back staff expenses, whereve
 
 ## Why
 
-For nearly 20 years, freelancers in Nigeria could send money with PayPal but not receive it. In Pakistan, PayPal still doesn't operate. In India, PayPal converts every payment to rupees. Small teams paying people in these places end up with spreadsheets, wire fees, and workers who don't get paid on time. Routewell gives each person the payout route that works where they live, and catches mistakes before money moves.
+For nearly 20 years, freelancers in Nigeria could send money with PayPal but not receive it. In Pakistan, PayPal still doesn't operate. In India, PayPal accounts can't hold dollars, so payments are converted to rupees. Small teams paying people in these places end up with spreadsheets, wire fees, and workers who don't get paid on time. Routewell gives each person the payout route that works where they live, and catches mistakes before money moves.
 
 ## What it does
 
