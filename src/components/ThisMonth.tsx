@@ -65,7 +65,7 @@ export function ThisMonth({
         </div>
         <div className="grid grid-cols-3 border-2 border-ink bg-paper-hi">
           <div className="border-r-2 border-ink p-3.5">
-            <div className="font-mono text-[clamp(20px,3vw,30px)] font-semibold tracking-tight">{dollars(total).replace(/\.00$/, "")}</div>
+            <div className="font-mono text-[clamp(20px,3vw,30px)] font-semibold tracking-tight">${Math.round(total / 100).toLocaleString("en-US")}</div>
             <div className="text-xs font-semibold">this month</div>
           </div>
           <div className="border-r-2 border-ink bg-acid p-3.5">

@@ -190,7 +190,7 @@ function tools(ctx: Ctx) {
         const e = await draftEnvelope(ctx, envelopeId);
         if (e.status !== "DRAFT") throw new Error("Put it back before changing it.");
         const cents = amountCents(amountUsd);
-        await prisma.envelope.update({ where: { id: e.id }, data: { amountCents: cents } });
+        await prisma.envelope.update({ where: { id: e.id }, data: { amountCents: cents, calculation: `Changed from ${dollars(e.amountCents)}` } });
         await step(ctx, "ACT", `Changed ${e.worker?.name ?? e.nameAsWritten}'s envelope from ${dollars(e.amountCents)} to ${dollars(cents)}: ${reason}`);
         return "Changed.";
       }),

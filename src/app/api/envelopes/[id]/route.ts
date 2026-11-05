@@ -43,7 +43,7 @@ export async function POST(req: Request, ctx: RouteContext<"/api/envelopes/[id]"
       case "SET_AMOUNT": {
         const cents = toCents(Number(body.amountUsd));
         if (!Number.isFinite(cents) || cents <= 0 || cents > 10_000_00) throw new Error("Enter an amount between $0.01 and $10,000.");
-        await prisma.envelope.update({ where: { id }, data: { amountCents: cents, ownerDecision: env.stamp === "LOOK_AGAIN" ? "PAY_ANYWAY" : env.ownerDecision } });
+        await prisma.envelope.update({ where: { id }, data: { amountCents: cents, calculation: `Changed by you from ${dollars(env.amountCents)}`, ownerDecision: env.stamp === "LOOK_AGAIN" ? "PAY_ANYWAY" : env.ownerDecision } });
         await log(ws, "YOU", `Changed ${who}'s envelope from ${dollars(env.amountCents)} to ${dollars(cents)}.`);
         break;
       }
