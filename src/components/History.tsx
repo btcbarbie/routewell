@@ -42,25 +42,33 @@ export function History({ s, refresh, busy }: { s: Snapshot; refresh: (runId: st
 
   const cols: ColDef<Row>[] = useMemo(
     () => [
-      { field: "date", headerName: "Sent", minWidth: 120 },
-      { field: "person", headerName: "Person", minWidth: 140 },
-      { field: "what", headerName: "What for", flex: 1, minWidth: 180 },
-      { field: "amount", headerName: "Amount", cellDataType: "number", valueFormatter: (p) => dollars(Math.round((p.value ?? 0) * 100)), cellClass: "font-mono", minWidth: 110 },
-      { field: "via", headerName: "Via", minWidth: 90 },
-      { field: "status", headerName: "Status", minWidth: 130 },
-      { field: "detail", headerName: "Details", flex: 1.4, minWidth: 240, wrapText: true, autoHeight: true },
+      { field: "date", headerName: "Sent", width: 120 },
+      { field: "person", headerName: "Person", width: 140 },
+      { field: "what", headerName: "What for", flex: 1, minWidth: 160, wrapText: true, autoHeight: true },
+      { field: "amount", headerName: "Amount", cellDataType: "number", valueFormatter: (p) => dollars(Math.round((p.value ?? 0) * 100)), cellClass: "font-mono", width: 115 },
+      { field: "via", headerName: "Via", width: 90 },
+      { field: "status", headerName: "Status", width: 130 },
+      { field: "detail", headerName: "Details", flex: 1.4, minWidth: 200, wrapText: true, autoHeight: true },
     ],
     [],
   );
 
   return (
-    <div className="grid gap-8 pt-8 lg:grid-cols-[minmax(0,1fr)_300px]">
-      <div className="min-w-0">
-        <SectionTitle hint="Every payment, sortable and filterable">All payments</SectionTitle>
-        <div className="h-[420px] w-full">
-          <AgGridReact<Row> theme={paperTheme} rowData={rows} columnDefs={cols} defaultColDef={{ sortable: true, filter: true, resizable: true }} />
-        </div>
+    <div className="pt-8">
+      <SectionTitle hint="Every payment, sortable and filterable">All payments</SectionTitle>
+      {/* Short lists grow to fit; long ones scroll inside the grid. */}
+      <div className={`w-full ${rows.length > 12 ? "h-[560px]" : ""}`}>
+        <AgGridReact<Row>
+          theme={paperTheme}
+          domLayout={rows.length > 12 ? "normal" : "autoHeight"}
+          rowData={rows}
+          columnDefs={cols}
+          defaultColDef={{ sortable: true, filter: true, resizable: true, cellStyle: { lineHeight: "1.4", paddingTop: "10px", paddingBottom: "10px" } }}
+        />
+      </div>
 
+      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="min-w-0">
         <SectionTitle>Pay runs</SectionTitle>
         <div className="space-y-4">
           {s.runs.map((r) => {
@@ -102,6 +110,7 @@ export function History({ s, refresh, busy }: { s: Snapshot; refresh: (runId: st
           ))}
         </ol>
       </aside>
+      </div>
     </div>
   );
 }
